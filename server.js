@@ -10,5 +10,3 @@ const certOptions = {
 
 const app = express()
 https.createServer(certOptions, app).listen(443)
-
-app.use(express.static('<path-to-serve>'))

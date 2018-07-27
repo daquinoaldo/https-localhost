@@ -8,6 +8,13 @@ menu and select the file. Then double-click on the certificate and select always
 - Linux: Depending on your Linux distribution, you can use `trust`, `update-ca-certificates` or another command to mark
 the generated root certificate as trusted.
 
+### Run
+1. Edit [server.js](server.js):
+    - serve static files with `app.use(express.static('<path-to-serve>'))`
+    - use express as backend, i.e.: `app.get('/', (req, res) => res.send('Hello World!'))`
+2. Install dependency with `npm install`
+3. Run with `sudo npm start` or `sudo node serve.js` (root required to use port 443)
+
 ### License
 [AGPL-3.0](LICENSE)
 
