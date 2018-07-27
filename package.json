@@ -1,0 +1,22 @@
+{
+  "name": "https-localhost",
+  "version": "1.0.0",
+  "description": "HTTPS server running on localhost",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daquinoaldo/https-localhost.git"
+  },
+  "author": "Aldo D'Aquino",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/daquinoaldo/https-localhost/issues"
+  },
+  "homepage": "https://github.com/daquinoaldo/https-localhost#readme",
+  "dependencies": {
+    "express": "latest"
+  }
+}
