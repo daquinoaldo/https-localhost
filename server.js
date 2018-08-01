@@ -19,3 +19,5 @@ http.createServer(function (req, res) {
   res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
   res.end();
 }).listen(80);
+
+console.info("Server running on port 443.")
