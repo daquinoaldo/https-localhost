@@ -4,7 +4,8 @@
   "description": "HTTPS server running on localhost",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "http2": "HTTP2=true node server.js"
   },
   "repository": {
     "type": "git",
@@ -17,6 +18,8 @@
   },
   "homepage": "https://github.com/daquinoaldo/https-localhost#readme",
   "dependencies": {
-    "express": "latest"
+    "compression": "latest",
+    "express": "latest",
+    "spdy": "latest"
   }
 }
