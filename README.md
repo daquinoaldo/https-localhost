@@ -24,11 +24,12 @@ Then serve static file with `sudo serve <static-path>`.
 
 
 #### Use as module
-Just require this module. It will start the server automatically.
+Install the dependency with `npm install -s https-localhost`.  
+Then just require this module, it will start the server automatically.
 
 For example, put in your index.js file:
 ```
-const app = require('./index.js')
+const app = require('https-localhost')
 app.get('/', (req, res) => res.send('Hello World!'))
 ```
 
