@@ -1,11 +1,13 @@
 {
   "name": "https-localhost",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "HTTPS server running on localhost",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "http2": "HTTP2=true node server.js"
+    "start": "node index.js"
+  },
+  "bin": {
+    "serve": "./index.js"
   },
   "repository": {
     "type": "git",
