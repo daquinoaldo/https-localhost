@@ -31,8 +31,10 @@ http.createServer(function (req, res) {
 console.info("Server running on port 443.")
 
 // serve static files, launch as: 'node index.js <static-path>'
-const staticPath = process.argv[2]
-if (staticPath) app.use(express.static(staticPath))
+if (require.main === module) {  // called directly (not through require)
+  const staticPath = process.argv[2]
+  app.use(express.static(staticPath || process.cwd()))
+}
 
 // export as module
 module.exports = app
