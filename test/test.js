@@ -5,6 +5,8 @@ const http = require('http')
 const https = require('https')
 const app = require('../index.js')
 
+process.env.TEST = true
+
 // run an external script located in the scriptPath
 function runScript(scriptPath, args = [], background = false) {
   return new Promise((resolve, reject) => {
@@ -52,7 +54,7 @@ function makeRequest(path = "/", secure = false) {
   })
 }
 
-let process
+let proc
 
 // TESTS
 describe("Testing https-localhost", () => {
@@ -68,11 +70,11 @@ describe("Testing https-localhost", () => {
   it('serve static file used as standalone tool', async function () {
     await app.close()
     runScript("index.js", ["test"], true)
-      .then(proc => process = proc)
+      .then(process => proc = process)
       .catch(err => console.error(err))
     await sleep(500)
     await makeRequest("/test.html", true)
       .then(res => assert(res.data.toString() === fs.readFileSync("test/test.html").toString()))
-    if (process) process.kill('SIGINT')
+    if (proc) proc.kill('SIGINT')
   })
 })
