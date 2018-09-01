@@ -4,7 +4,8 @@
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "TEST=true mocha --exit"
   },
   "bin": {
     "serve": "./index.js"
@@ -23,5 +24,8 @@
     "compression": "latest",
     "express": "latest",
     "spdy": "latest"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
   }
 }
