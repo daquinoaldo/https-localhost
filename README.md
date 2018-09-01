@@ -41,6 +41,9 @@ const app = require('https-localhost')
 app.get('/', (req, res) => res.send('Hello World!'))
 ```
 
+You can close the server with `app.close()`.  
+Closing the server is an async operation, you can get notified with `app.close(callback)` or `app.close().then(...)`.
+
 ---
 
 ### License
