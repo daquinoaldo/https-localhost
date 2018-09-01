@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "sudo TEST=true mocha --exit"
+    "test": "TEST=true mocha --exit"
   },
   "bin": {
     "serve": "./index.js"

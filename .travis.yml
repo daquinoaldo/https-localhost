@@ -1,4 +1,5 @@
 language: node_js
 node_js:
-- "node"
+- "stable"
 sudo: required
+script: "sudo $(which npm) test"
