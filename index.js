@@ -7,15 +7,21 @@ const https = require('spdy') // using HTTP/2: spdy will be deprecated soon, wai
 const express = require('express')
 const compression = require('compression')
 
-// SSL certificate
+// SSL CERTIFICATE
 const certOptions = {
   key: fs.readFileSync(path.resolve(__dirname + "/cert/server.key")),
   cert: fs.readFileSync(path.resolve(__dirname + "/cert/server.crt"))
 }
 
-// run express on 443
+const port = process.env.PORT || 443
+
+
+// START THE APP
+
+// run express
 const app = express()
-app.server = https.createServer(certOptions, app).listen(443)
+app.server = https.createServer(certOptions, app).listen(port)
+
 // save sockets for fast close
 const sockets = []
 let nextSocketId = 0
@@ -30,27 +36,30 @@ app.use(compression())
 app.set('json spaces', 0)
 
 // redirect http to https
-app.http = http.createServer(function (req, res) {
-  res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url })
-  res.end()
-}).listen(80)
-// save sockets for fast close
-app.server.on('connection', socket => {
-  const socketId = nextSocketId++
-  sockets[socketId] = socket
-  socket.on('close', () => delete sockets[socketId])
-})
+if (port === 443 || process.env.HTTP_PORT) {
+  app.http = http.createServer(function (req, res) {
+    res.writeHead(301, {"Location": "https://" + req.headers['host'] + req.url})
+    res.end()
+  }).listen(process.env.HTTP_PORT || 80)
 
-// ready
-if (!process.env.TEST) console.info("Server running on port 443.")
+  app.http.on('connection', socket => {
+    const socketId = nextSocketId++
+    sockets[socketId] = socket
+    socket.on('close', () => delete sockets[socketId])
+  })
+}
 
-// serve static files, launch as: 'node index.js <static-path>'
+// SERVE STATIC FILES, if launched as: 'node index.js <static-path>'
 if (require.main === module) {  // called directly (not through require)
   const staticPath = process.argv[2]
   app.use(express.static(staticPath || process.cwd()))
 }
 
-// close the app
+// ready
+if (!process.env.TEST) console.info("Server running on port " + port + ".")
+
+
+// CLOSE THE APP
 app.close = (callback) => {
   const promises = [
     new Promise(resolve => app.http.close(resolve)),
