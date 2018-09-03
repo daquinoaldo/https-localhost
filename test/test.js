@@ -1,11 +1,13 @@
+process.env.TEST = true
+process.env.PORT = 4443
+process.env.HTTP_PORT = 8080
+
 const assert = require('assert')
 const childProcess = require('child_process');
 const fs = require('fs');
 const http = require('http')
 const https = require('https')
 const app = require('../index.js')
-
-process.env.TEST = true
 
 // run an external script located in the scriptPath
 function runScript(scriptPath, args = [], background = false) {
@@ -29,12 +31,13 @@ async function sleep(ms = 0) {
 function makeRequest(path = "/", secure = false) {
   const agentOptions = {
     host: 'localhost',
-    port: '443',
+    port: process.env.PORT || 443,
     path: '/',
     rejectUnauthorized: false
   }
   const options = {
     host: "localhost",
+    port: process.env.HTTP_PORT || 80,
     path: path,
     method: "GET",
     headers: { }
