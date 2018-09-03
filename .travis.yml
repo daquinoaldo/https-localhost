@@ -1,5 +1,5 @@
 language: node_js
 node_js:
-- "stable"
+- "node"
 sudo: required
 script: "sudo node_modules/mocha/bin/mocha --exit"
