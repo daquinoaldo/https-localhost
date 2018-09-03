@@ -1,6 +1,6 @@
 {
   "name": "https-localhost",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
@@ -14,6 +14,16 @@
     "type": "git",
     "url": "git+https://github.com/daquinoaldo/https-localhost.git"
   },
+  "keywords": [
+    "localhost",
+    "https",
+    "http2",
+    "https-server",
+    "SSL",
+    "express",
+    "expressjs",
+    "express-js"
+  ],
   "author": "Aldo D'Aquino",
   "license": "AGPL-3.0",
   "bugs": {
