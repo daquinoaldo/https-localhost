@@ -1,11 +1,12 @@
 {
   "name": "https-localhost",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "mocha --exit"
+    "pretest": "eslint --ignore-path .gitignore .",
+    "test": "mocha --exit",
+    "start": "node index.js"
   },
   "bin": {
     "serve": "./index.js"
@@ -31,11 +32,18 @@
   },
   "homepage": "https://github.com/daquinoaldo/https-localhost#readme",
   "dependencies": {
-    "compression": "latest",
-    "express": "latest",
-    "spdy": "latest"
+    "compression": "^1.7.3",
+    "express": "^4.16.3",
+    "spdy": "^3.4.7"
   },
   "devDependencies": {
+    "eslint": "^5.5.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-config-strongloop": "^2.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.0",
+    "eslint-plugin-standard": "^4.0.0",
     "mocha": "^5.2.0"
   }
 }

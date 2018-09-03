@@ -37,8 +37,8 @@ Then just require this module, it will start the server automatically.
 
 For example, put in your index.js file:
 ```
-const app = require('https-localhost')
-app.get('/', (req, res) => res.send('Hello World!'))
+const app = require("https-localhost")
+app.get("/", (req, res) => res.send("Hello World!"))
 ```
 
 #### Specify the port

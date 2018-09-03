@@ -1,0 +1,24 @@
+{
+  "extends": "standard",
+  //"extends": "strongloop",
+  //"extends": "eslint:recommended",
+  "env": {
+    "node": true,
+    "es6": true,
+    "mocha": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 8
+  },
+  "rules": {
+    "semi": ["warn", "never"],
+    "quotes": ["warn", "double"],
+    "comma-dangle": ["warn", "never"],
+    "space-before-function-paren": ["warn", "never"],
+    "curly": ["warn", "multi"],
+    "max-len": ["error", { "code": 80, "tabWidth": 2 }],
+    "quote-props": ["error", "as-needed"],
+    "no-console": "off",
+    "process.env": false
+  }
+}
