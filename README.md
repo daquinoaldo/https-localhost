@@ -14,7 +14,7 @@ Serve static files or import as module in your project.
 
 
 ## Install and trust the certificate
-Add the root certificate we just generated to your list of trusted certificates.
+Add the [rootCA.pem](rootCA.pem) certificate to your list of trusted certificates.
 This step depends on the operating system you're running:
 
 - Mac OS: open Keychain Access, choose System from the left navigation bar, choose "Import items..." from the File app
