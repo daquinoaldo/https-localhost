@@ -1,4 +1,6 @@
 process.env.USE_STATIC = true
+process.env.PORT = 4443
+process.env.HTTP_PORT = 8080
 
 const assert = require("assert")
 const fs = require("fs")
@@ -16,7 +18,7 @@ function makeRequest(path = "/", secure = false) {
   }
   const options = {
     host: "localhost",
-    port: 80,
+    port: process.env.HTTP_PORT || 80,
     path: path,
     method: "GET",
     headers: { }
