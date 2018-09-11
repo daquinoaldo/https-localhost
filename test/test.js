@@ -1,31 +1,10 @@
-process.env.TEST = true
-process.env.PORT = 4443
-process.env.HTTP_PORT = 8080
+process.env.USE_STATIC = true
 
 const assert = require("assert")
-const childProcess = require("child_process")
 const fs = require("fs")
 const http = require("http")
 const https = require("https")
 const app = require("../index.js")
-
-// run an external script located in the scriptPath
-function runScript(scriptPath, args = [], background = false) {
-  return new Promise((resolve, reject) => {
-    const process = childProcess.fork(scriptPath, args)
-    process.on("error", err => reject(err))
-    process.on("exit", code => {
-      if (code === 0) resolve()
-      else reject(code)
-    })
-    if (background) resolve(process)
-  })
-}
-
-// sleep function, must be used with await
-async function sleep(ms = 0) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
 
 // make an http request on the specified path
 function makeRequest(path = "/", secure = false) {
@@ -37,7 +16,7 @@ function makeRequest(path = "/", secure = false) {
   }
   const options = {
     host: "localhost",
-    port: process.env.HTTP_PORT || 80,
+    port: 80,
     path: path,
     method: "GET",
     headers: { }
@@ -67,20 +46,14 @@ describe("Testing https-localhost", () => {
       .then(res => assert(res.statusCode === 301))
   })
   it("works as a module", async function() {
-    app.get("/test", (req, res) => res.send("TEST"))
-    await makeRequest("/test", true)
+    app.get("/test/module", (req, res) => res.send("TEST"))
+    await makeRequest("/test/module", true)
       .then(res => assert(res.data === "TEST"))
   })
   it("serve static file used as standalone tool", async function() {
-    process.env.PORT = 4444
-    process.env.HTTP_PORT = 8081
-    runScript("index.js", ["test"], true)
-      .then(process => proc = process) // eslint-disable-line no-return-assign
-      .catch(err => console.error(err))
-    await sleep(500)
-    await makeRequest("/test.html", true)
+    await makeRequest("/test/static.html", true)
       .then(res => assert(
-        res.data.toString() === fs.readFileSync("test/test.html").toString()))
+        res.data.toString() === fs.readFileSync("test/static.html").toString()))
     if (proc) proc.kill("SIGINT")
   })
 })

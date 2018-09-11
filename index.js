@@ -26,15 +26,23 @@ app.use(compression())
 app.set("json spaces", 0)
 
 // redirect http to https
-if (port === 443 || process.env.HTTP_PORT)
+/* istanbul ignore else */ // useless to test
+if (port === 443)
   app.http = http.createServer((req, res) => {
     res.writeHead(301, { Location: "https://" + req.headers["host"] + req.url })
     res.end()
-  }).listen(process.env.HTTP_PORT || 80)
+  }).listen(80)
 
 // serve static files, if launched as: "node index.js <static-path>"
-if (require.main === module)
-  app.use(express.static(process.argv[2] || process.cwd()))
+/* istanbul ignore else */ // useless to test
+if (require.main === module || process.env.USE_STATIC) {
+  let staticPath = process.cwd()
+  /* istanbul ignore if */ // impossible to test
+  if (process.argv.join().includes("serve"))
+    staticPath = process.argv.join().replace("sudo", "")
+      .replace("serve", "").replace(" ", "")
+  app.use(express.static(staticPath))
+}
 
 // ready
 console.info("Server running on port " + port + ".")
