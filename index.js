@@ -55,10 +55,10 @@ if (require.main === module) {
 }
 
 // ready
-if (!process.env.TEST) console.info("Server running on port " + port + ".")
+console.info("Server running on port " + port + ".")
 
 // close the app
-app.close = (callback) => {
+app.close = () => {
   const promises = [
     new Promise(resolve => app.http.close(resolve)),
     new Promise(resolve => app.server.close(resolve))
@@ -67,8 +67,7 @@ app.close = (callback) => {
   for (const socketId in sockets)
     sockets[socketId].destroy()
   return Promise.all(promises).then(() => {
-    if (!process.env.TEST) console.info("Server closed.")
-    if (callback) callback()
+    console.info("Server closed.")
   })
 }
 

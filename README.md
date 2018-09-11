@@ -50,7 +50,7 @@ You can activate the http redirect again specifying not only the PORT environmen
 
 #### Close the server
 You can close the server with `app.close()`.  
-Closing the server is an async operation, you can get notified with `app.close(callback)` or `app.close().then(...)`.
+Closing the server is an async operation, you can get notified with a promise: `app.close().then(...)`.
 
 ---
 

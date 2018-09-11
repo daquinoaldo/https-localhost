@@ -6,6 +6,7 @@
   "scripts": {
     "pretest": "eslint --ignore-path .gitignore .",
     "test": "mocha --exit",
+    "posttest": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec ./test/*.js",
     "start": "node index.js"
   },
   "bin": {
@@ -37,13 +38,14 @@
     "spdy": "^3.4.7"
   },
   "devDependencies": {
+    "coveralls": "^3.0.2",
     "eslint": "^5.5.0",
     "eslint-config-standard": "^12.0.0",
-    "eslint-config-strongloop": "^2.1.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^4.0.0",
     "eslint-plugin-standard": "^4.0.0",
+    "istanbul": "^0.4.5",
     "mocha": "^5.2.0"
   }
 }
