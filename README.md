@@ -48,10 +48,6 @@ or from another module with `process.env.PORT = <port-number>`.
 If you specify a port number the http redirect to https will be disabled.
 You can activate the http redirect again specifying not only the PORT environment variable but also the HTTP_PORT one.
 
-#### Close the server
-You can close the server with `app.close()`.  
-Closing the server is an async operation, you can get notified with a promise: `app.close().then(...)`.
-
 ---
 
 ### License

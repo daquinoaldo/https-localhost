@@ -72,7 +72,8 @@ describe("Testing https-localhost", () => {
       .then(res => assert(res.data === "TEST"))
   })
   it("serve static file used as standalone tool", async function() {
-    await app.close()
+    process.env.PORT = 4444
+    process.env.HTTP_PORT = 8081
     runScript("index.js", ["test"], true)
       .then(process => proc = process) // eslint-disable-line no-return-assign
       .catch(err => console.error(err))
