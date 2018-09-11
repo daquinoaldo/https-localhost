@@ -3,8 +3,7 @@
 const path = require("path")
 const fs = require("fs")
 const http = require("http")
-// using HTTP/2: spdy will be deprecated soon,
-// waiting for HTTP/2 on https module.
+// spdy will be deprecated soon, waiting for HTTP/2 support on https module.
 const https = require("spdy")
 const express = require("express")
 const compression = require("compression")
