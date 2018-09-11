@@ -39,8 +39,6 @@ function makeRequest(path = "/", secure = false) {
   })
 }
 
-let proc
-
 // TESTS
 describe("Testing https-localhost", () => {
   it("redirect http to https", async function() {
@@ -56,6 +54,5 @@ describe("Testing https-localhost", () => {
     await makeRequest("/test/static.html", true)
       .then(res => assert(
         res.data.toString() === fs.readFileSync("test/static.html").toString()))
-    if (proc) proc.kill("SIGINT")
   })
 })
