@@ -3,8 +3,7 @@
 const path = require("path")
 const fs = require("fs")
 const http = require("http")
-// spdy will be deprecated soon, waiting for HTTP/2 support on https module.
-const https = require("spdy")
+const https = require("http2")
 const express = require("express")
 const compression = require("compression")
 
@@ -15,7 +14,7 @@ const certOptions = {
 }
 
 const port = process.env.PORT ||
-/* istanbul ignore next: impossible to test */ 443
+  /* istanbul ignore next: impossible to test */ 443
 
 // run express
 const app = express()
@@ -32,7 +31,7 @@ if (port === 443 || process.env.HTTP_PORT)
     res.writeHead(301, { Location: "https://" + req.headers["host"] + req.url })
     res.end()
   }).listen(process.env.HTTP_PORT ||
-  /* istanbul ignore next: impossible to test */ 80)
+    /* istanbul ignore next: impossible to test */ 80)
 
 // serve static files, if launched as: "node index.js <static-path>"
 /* istanbul ignore else: useless to test */
