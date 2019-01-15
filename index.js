@@ -44,14 +44,14 @@ app.redirect = function() {
 }
 
 // serve static content, usage `app.serve([path])`
-app.serve = function(path = process.cwd(), port) {
+app.serve = function(path = process.cwd(), port = process.env.PORT || 443) {
   app.use(express.static(path))
-  if (port) app.listen(port)
-  else app.listen()
+  app.listen(port)
   console.info("Serving static path: " + path)
 }
 
 /* MAIN (running as script) */
+
 // usage: `serve [<path>]` or `node index.js [<path>]`
 /* istanbul ignore if  */
 if (require.main === module) {

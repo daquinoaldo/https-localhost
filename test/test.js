@@ -49,14 +49,6 @@ describe("Testing https-localhost", () => {
     await app.server.close()
   })
 
-  it("works on default port", async function() {
-    app.serve()
-    await makeRequest("/test/static.html", true, 443)
-      .then(res => assert(
-        res.data.toString() === fs.readFileSync("test/static.html").toString()))
-    await app.server.close()
-  })
-
   it("redirect http to https", async function() {
     await app.redirect()
     await makeRequest("/", false, 80)
