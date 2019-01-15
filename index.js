@@ -35,11 +35,11 @@ app.set("json spaces", 0)
 /* SETUP USEFUL FUNCTIONS */
 
 // redirect http to https, usage `app.redirect()`
-app.redirect = function() {
+app.redirect = function(port = 80) {
   app.http = http.createServer((req, res) => {
     res.writeHead(301, { Location: "https://" + req.headers["host"] + req.url })
     res.end()
-  }).listen(80)
+  }).listen(port)
   console.info("http to https redirection active.")
 }
 

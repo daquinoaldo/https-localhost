@@ -1,4 +1,5 @@
-const PORT = 4443
+const HTTPS_PORT = 4443
+const HTTP_PORT = 8080
 
 const assert = require("assert")
 const fs = require("fs")
@@ -7,7 +8,7 @@ const https = require("https")
 const app = require("../index.js")
 
 // make an http request on the specified path
-function makeRequest(path = "/", secure = true, port = PORT) {
+function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
   const options = {
     host: "localhost",
     port: port,
@@ -35,14 +36,14 @@ function makeRequest(path = "/", secure = true, port = PORT) {
 describe("Testing https-localhost", () => {
   it("works as a module", async function() {
     app.get("/test/module", (req, res) => res.send("TEST"))
-    await app.listen(PORT)
+    await app.listen(HTTPS_PORT)
     await makeRequest("/test/module")
       .then(res => assert(res.data === "TEST"))
     await app.server.close()
   })
 
   it("works as a module serving static files", async function() {
-    app.serve("test", PORT)
+    app.serve("test", HTTPS_PORT)
     await makeRequest("/static.html")
       .then(res => assert(
         res.data.toString() === fs.readFileSync("test/static.html").toString()))
@@ -50,8 +51,8 @@ describe("Testing https-localhost", () => {
   })
 
   it("redirect http to https", async function() {
-    await app.redirect()
-    await makeRequest("/", false, 80)
+    await app.redirect(HTTP_PORT)
+    await makeRequest("/", false, HTTP_PORT)
       .then(res => assert(res.statusCode === 301))
   })
 })
