@@ -13,7 +13,7 @@ Serve static files or import as module in your project.
 [![npm version](https://img.shields.io/npm/v/https-localhost.svg)](https://www.npmjs.com/package/https-localhost?activeTab=versions)
 
 
-## Install and trust the certificate
+### Install and trust the certificate
 Add the [rootCA.pem](rootCA.pem) certificate to your list of trusted certificates.
 This step depends on the operating system you're running:
 
@@ -24,32 +24,32 @@ menu and select the file. Then double-click on the certificate and select always
 the generated root certificate as trusted.
 
 
-## Run
-
 ### Use standalone
 From terminal navigate into the folder and run `sudo npm install -g` to install this tool globally.
 
 Then serve static file with `sudo serve <static-path>`.
+If a static path is not provided the current directory content will be served.
+
+**You must use the absolute path.**
+
+You can change the port setting the PORT environmental variable: `sudo PORT=<port-number> serve <static-path>`.
 
 
 ### Use as module
 Install the dependency with `npm install -s https-localhost`.  
-Then just require this module, it will start the server automatically.
 
-For example, put in your index.js file:
+Put in your index.js file:
 ```
 const app = require("https-localhost")
-app.get("/", (req, res) => res.send("Hello World!"))
+// app is an express app, do what you usually do with express
+app.listen(port)
 ```
+If the port number is not provided, it will listen on 443.
 
-#### Specify the port
-You can specify the port number of the SSL port with `sudo PORT=<port-number> serve <static-path>`
-or from another module with `process.env.PORT = <port-number>`.
+To redirect the http traffic to https use `app.redirect()`.
 
-If you specify a port number the http redirect to https will be disabled.
-You can activate the http redirect again specifying not only the PORT environment variable but also the HTTP_PORT one.
+You can also serve static files with `app.serve(path)`
 
----
 
 ### License
 [AGPL-3.0](LICENSE)
