@@ -1,6 +1,4 @@
-process.env.USE_STATIC = true
-process.env.PORT = 4443
-process.env.HTTP_PORT = 8080
+const PORT = 4443
 
 const assert = require("assert")
 const fs = require("fs")
@@ -9,21 +7,15 @@ const https = require("https")
 const app = require("../index.js")
 
 // make an http request on the specified path
-function makeRequest(path = "/", secure = false) {
-  const agentOptions = {
-    host: "localhost",
-    port: process.env.PORT || 443,
-    path: "/",
-    rejectUnauthorized: false
-  }
+function makeRequest(path = "/", secure = true, port = PORT) {
   const options = {
     host: "localhost",
-    port: process.env.HTTP_PORT || 80,
+    port: port,
     path: path,
     method: "GET",
-    headers: { }
+    headers: { },
+    rejectUnauthorized: false
   }
-  if (secure) options.agent = new https.Agent(agentOptions)
   const protocol = secure ? https : http
   return new Promise((resolve, reject) => {
     protocol.request(options, resp => {
@@ -41,18 +33,33 @@ function makeRequest(path = "/", secure = false) {
 
 // TESTS
 describe("Testing https-localhost", () => {
-  it("redirect http to https", async function() {
-    await makeRequest()
-      .then(res => assert(res.statusCode === 301))
-  })
   it("works as a module", async function() {
     app.get("/test/module", (req, res) => res.send("TEST"))
-    await makeRequest("/test/module", true)
+    await app.listen(PORT)
+    await makeRequest("/test/module")
       .then(res => assert(res.data === "TEST"))
+    await app.server.close()
   })
-  it("serve static file used as standalone tool", async function() {
-    await makeRequest("/test/static.html", true)
+
+  it("works as a module serving static files", async function() {
+    app.serve("test", PORT)
+    await makeRequest("/static.html")
       .then(res => assert(
         res.data.toString() === fs.readFileSync("test/static.html").toString()))
+    await app.server.close()
+  })
+
+  it("works on default port", async function() {
+    app.serve()
+    await makeRequest("/test/static.html", true, 443)
+      .then(res => assert(
+        res.data.toString() === fs.readFileSync("test/static.html").toString()))
+    await app.server.close()
+  })
+
+  it("redirect http to https", async function() {
+    await app.redirect()
+    await makeRequest("/", false, 80)
+      .then(res => assert(res.statusCode === 301))
   })
 })
