@@ -13,17 +13,6 @@ Serve static files or import as module in your project.
 [![npm version](https://img.shields.io/npm/v/https-localhost.svg)](https://www.npmjs.com/package/https-localhost?activeTab=versions)
 
 
-### Install and trust the certificate
-Add the [rootCA.pem](rootCA.pem) certificate to your list of trusted certificates.
-This step depends on the operating system you're running:
-
-- Mac OS: open Keychain Access, choose System from the left navigation bar, choose "Import items..." from the File app
-menu and select the file. Then double-click on the certificate and select always-trust in the Trust panel.
-
-- Linux: Depending on your Linux distribution, you can use `trust`, `update-ca-certificates` or another command to mark
-the generated root certificate as trusted.
-
-
 ### Use standalone
 From terminal navigate into the folder and run `sudo npm install -g` to install this tool globally.
 
@@ -49,6 +38,28 @@ If the port number is not provided, it will listen on 443.
 To redirect the http traffic to https use `app.redirect()`.
 
 You can also serve static files with `app.serve(path)`
+
+
+### [Optional/Linux] Install and trust the certificate
+After `npm install` will run a script that tries to install and validate automatically the certificate.
+**Actually works only on MacOS.**
+
+However, this script is in beta and provided as-is, so there isn't any guarantee that will work.  
+For that reason you can also install the certificate manually, as follows.
+
+If you decide to not install it, it's fine, the package still work.
+However, visiting localhost there will be a invalid certificate issue.
+
+To trust the certificate just add the [cert/defaultCA.pem](cert/defaultCA.pem) certificate
+to your list of trusted certificates.
+
+This step depends on the operating system you're running:
+- Mac OS:
+    open Keychain Access, choose System from the left navigation bar, choose "Import items..." from the File app
+menu and select the file. Then double-click on the certificate and select always-trust in the Trust panel.
+- Linux:
+    Depending on your Linux distribution, you can use `trust`, `update-ca-certificates`
+or another command to mark the generated root certificate as trusted.
 
 
 ### License

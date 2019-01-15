@@ -1,5 +1,15 @@
+# MacOS
+.DS_STORE
+
+# IDEs
 .idea
 *.iml
-.DS_STORE
+
+# Node
 node_modules
+
+# Other
 coverage
+cert/CA.*
+cert/localhost.*
+cert/server.csr

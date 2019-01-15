@@ -12,9 +12,21 @@ const minify = require("express-minify")
 /* CONFIGURE THE SERVER */
 
 // SSL certificate
-const certOptions = {
-  key: fs.readFileSync(path.resolve(__dirname, "cert/server.key")),
-  cert: fs.readFileSync(path.resolve(__dirname, "cert/server.crt"))
+let certOptions
+try {
+  certOptions = {
+    key: fs.readFileSync(path.resolve(__dirname, "cert/localhost.key")),
+    cert: fs.readFileSync(path.resolve(__dirname, "cert/localhost.crt"))
+  }
+} catch (e) {
+  // istanbul ignore next
+  certOptions = {
+    key: fs.readFileSync(path.resolve(__dirname, "cert/default.key")),
+    cert: fs.readFileSync(path.resolve(__dirname, "cert/default.crt"))
+  }
+  // istanbul ignore next
+  console.warn("Using the default certificate. " +
+    "Validate it installing the defaultCA.pem certificate in the cert folder")
 }
 
 // create a server with express
@@ -53,7 +65,7 @@ app.serve = function(path = process.cwd(), port = process.env.PORT || 443) {
 /* MAIN (running as script) */
 
 // usage: `serve [<path>]` or `node index.js [<path>]`
-/* istanbul ignore if  */
+// istanbul ignore if
 if (require.main === module) {
   // retrieve the static path from the process argv or use the cwd
   // 1st is node, 2nd is serve or index.js, 3rd (if exists) is the path
