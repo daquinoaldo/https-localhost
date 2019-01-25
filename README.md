@@ -12,6 +12,15 @@ Serve static files or import as module in your project.
 [![GitHub issues](https://img.shields.io/github/issues/daquinoaldo/https-localhost.svg)](https://github.com/daquinoaldo/https-localhost/issues)
 [![npm version](https://img.shields.io/npm/v/https-localhost.svg)](https://www.npmjs.com/package/https-localhost?activeTab=versions)
 
+### Install
+```
+npm install -g --unsafe-perm=true https-localhost
+```
+#### Why `unsafe-perm=true`?
+Is needed on Ubuntu to correctly run the post-install script that trust the localhost SSl certificate.  
+You can skip it on other platforms.
+
+If you don't trust the script, you can install it in the usual way and than follow the [optional instructions](#optional--trust-the-certificate).
 
 ### Use standalone
 From terminal navigate into the folder and run `sudo npm install -g` to install this tool globally.
@@ -40,7 +49,7 @@ To redirect the http traffic to https use `app.redirect()`.
 You can also serve static files with `app.serve(path)`
 
 
-### [Optional] Install and trust the certificate
+### [Optional] Trust the certificate
 **If you are not on MacOS or Ubuntu, you should follow this instructions.**
 
 After `npm install` will run a script that tries to install and validate automatically the certificate.
