@@ -26,12 +26,10 @@ case "$(uname -s)" in
     Linux*)
         echo "Using mkcert on linux."
         sudo apt install -y golang-go libnss3-tools
+        go get -u github.com/FiloSottile/mkcert
         PATH=$(go env GOPATH)/bin:$PATH
         mkcert -install
         mkcert -cert-file cert/localhost.crt -key-file cert/localhost.key localhost
-        #sudo cp cert/CA.pem /usr/local/share/ca-certificates/localhost.crt
-        #sudo chmod 664 /usr/local/share/ca-certificates/localhost.crt
-        #sudo update-ca-certificates
         ;;
     *)
         echo "Unsupported system."
