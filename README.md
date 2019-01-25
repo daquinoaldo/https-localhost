@@ -40,11 +40,11 @@ To redirect the http traffic to https use `app.redirect()`.
 You can also serve static files with `app.serve(path)`
 
 
-### [Optional/Linux] Install and trust the certificate
-After `npm install` will run a script that tries to install and validate automatically the certificate.
-**Actually works only on MacOS.**
+### [Optional] Install and trust the certificate
+**If you are not on MacOS or Ubuntu, you should follow this instructions.**
 
-However, this script is in beta and provided as-is, so there isn't any guarantee that will work.  
+After `npm install` will run a script that tries to install and validate automatically the certificate.
+However, this script is in beta and provided as-is, so there isn't any guarantee that will work.
 For that reason you can also install the certificate manually, as follows.
 
 If you decide to not install it, it's fine, the package still work.
@@ -60,6 +60,15 @@ menu and select the file. Then double-click on the certificate and select always
 - Linux:
     Depending on your Linux distribution, you can use `trust`, `update-ca-certificates`
 or another command to mark the generated root certificate as trusted.
+
+#### TL;DR
+Looking for something easier? Take a look to [mkcert](https://github.com/FiloSottile/mkcert) (requires Go).
+
+Install it, then move into the https-localhost folder and run:
+```
+mkcert -install
+mkcert -cert-file cert/localhost.crt -key-file cert/localhost.key localhost
+```
 
 
 ### License
