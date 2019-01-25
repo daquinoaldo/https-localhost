@@ -3,6 +3,7 @@ const exec = require("child_process").exec
 // noinspection FallThroughInSwitchStatementJS
 switch (process.platform) {
   case "darwin": // MacOS
+  case "linux":
     console.log("\n----------------------------------------------\n" +
                   "Please input your sudo password when required.\n" +
                   "----------------------------------------------\n")
@@ -12,10 +13,6 @@ switch (process.platform) {
       if (error !== null) console.error(`exec error: ${error}`)
     })
     break
-  case "linux":
-    console.warn("Cannot generate the localhost certificate on linux yet. " +
-      "Coming soon.")
-    process.exit(0)
   case "win32":
     console.warn("Cannot generate the localhost certificate on Windows.")
     process.exit(0)
