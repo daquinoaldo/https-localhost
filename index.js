@@ -18,22 +18,17 @@ try {
     key: fs.readFileSync(path.resolve(__dirname, "cert/localhost.key")),
     cert: fs.readFileSync(path.resolve(__dirname, "cert/localhost.crt"))
   }
-} catch (e) {
-  // istanbul ignore next
-  certOptions = {
-    key: fs.readFileSync(path.resolve(__dirname, "cert/default.key")),
-    cert: fs.readFileSync(path.resolve(__dirname, "cert/default.crt"))
-  }
-  // istanbul ignore next
-  console.warn("Using the default certificate. " +
-    "Validate it installing the defaultCA.pem certificate in the cert folder")
+} catch (e) /* istanbul ignore next: TODO, not so important */ {
+  console.error("Cannot find the certificates. Try to reinstall the module.")
+  process.exit(1)
 }
 
 // create a server with express
 const app = express()
 
 // override the default express listen method to use our server
-app.listen = function(port = process.env.PORT || 443) {
+app.listen = function(port = process.env.PORT ||
+/* istanbul ignore next: cannot be tested on Travis */ 443) {
   app.server = https.createServer(certOptions, app).listen(port)
   console.info("Server running on port " + port + ".")
   return app.server
@@ -47,7 +42,8 @@ app.set("json spaces", 0)
 /* SETUP USEFUL FUNCTIONS */
 
 // redirect http to https, usage `app.redirect()`
-app.redirect = function(port = 80) {
+app.redirect = function(
+/* istanbul ignore next: cannot be tested on Travis */ port = 80) {
   app.http = http.createServer((req, res) => {
     res.writeHead(301, { Location: "https://" + req.headers["host"] + req.url })
     res.end()
@@ -56,16 +52,17 @@ app.redirect = function(port = 80) {
 }
 
 // serve static content, usage `app.serve([path])`
-app.serve = function(path = process.cwd(), port = process.env.PORT || 443) {
+app.serve = function(path = process.cwd(), port = process.env.PORT ||
+/* istanbul ignore next: cannot be tested on Travis */ 443) {
   app.use(express.static(path))
-  app.listen(port)
   console.info("Serving static path: " + path)
+  app.listen(port)
 }
 
-/* MAIN (running as script) */
+/* MAIN */
 
 // usage: `serve [<path>]` or `node index.js [<path>]`
-// istanbul ignore if
+// istanbul ignore if: cannot be tested
 if (require.main === module) {
   // retrieve the static path from the process argv or use the cwd
   // 1st is node, 2nd is serve or index.js, 3rd (if exists) is the path

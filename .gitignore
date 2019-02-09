@@ -5,11 +5,11 @@
 .idea
 *.iml
 
-# Node
+# Node & npm
 node_modules
-
-# Other
 coverage
-cert/CA.*
+.nyc_output
+
+# Certificates
 cert/localhost.*
-cert/server.csr
+cert/mkcert-*

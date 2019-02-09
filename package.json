@@ -1,11 +1,14 @@
 {
   "name": "https-localhost",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
     "pretest": "eslint --ignore-path .gitignore .",
-    "test": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec ./test/*.js --exit",
+    "test": "./node_modules/nyc/bin/nyc.js ./node_modules/mocha/bin/_mocha --exit",
+    "posttest": "./node_modules/nyc/bin/nyc.js report --reporter=html",
+    "only-test": "./node_modules/mocha/bin/_mocha --exit",
+    "coveralls": "./node_modules/nyc/bin/nyc.js report --reporter=text-lcov | ./node_modules/coveralls/bin/coveralls.js",
     "postinstall": "node cert/generate.js",
     "start": "node index.js"
   },
@@ -40,13 +43,13 @@
   },
   "devDependencies": {
     "coveralls": "^3.0.2",
-    "eslint": "^5.5.0",
+    "eslint": "^5.13.0",
     "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-node": "^7.0.1",
-    "eslint-plugin-promise": "^4.0.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
-    "istanbul": "^0.4.5",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "nyc": "^13.2.0"
   }
 }
