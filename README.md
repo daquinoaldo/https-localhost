@@ -1,7 +1,8 @@
 # HTTPS server running on localhost
-Run an express server on localhost with HTTP2 and SSL for free.
+Run an express server on localhost with HTTP2 and SSL. Serve static files or import as module in your project.
 
-Serve static files or import as module in your project.
+https-localhost is a lightweight tool for serving static content on SSL thanks to locally-trusted development certificates.  
+It works with MacOS, Linux and Windows, on Chrome and Firefox, and requires you no configuration.
 
 [![NPM](https://nodei.co/npm/https-localhost.png)](https://nodei.co/npm/https-localhost/)
 
@@ -10,75 +11,73 @@ Serve static files or import as module in your project.
 [![Dependency Status](https://img.shields.io/david/daquinoaldo/https-localhost.svg)](https://david-dm.org/daquinoaldo/https-localhost)
 [![Known Vulnerabilities](https://snyk.io/test/npm/https-localhost/badge.svg)](https://snyk.io/test/npm/https-localhost)
 [![GitHub issues](https://img.shields.io/github/issues/daquinoaldo/https-localhost.svg)](https://github.com/daquinoaldo/https-localhost/issues)
-[![npm version](https://img.shields.io/npm/v/https-localhost.svg)](https://www.npmjs.com/package/https-localhost?activeTab=versions)
 
-### Install
+## Install
 ```
-npm install -g --unsafe-perm=true https-localhost
+npm i -g https-localhost
 ```
-#### Why `unsafe-perm=true`?
-Is needed on Ubuntu to correctly run the post-install script that trust the localhost SSl certificate.  
-You can skip it on other platforms.
-
-If you don't trust the script, you can install it in the usual way and than follow the [optional instructions](#optional--trust-the-certificate).
 
 ### Use standalone
-From terminal navigate into the folder and run `sudo npm install -g` to install this tool globally.
-
-Then serve static file with `sudo serve <static-path>`.
-If a static path is not provided the current directory content will be served.
-
-**You must use the absolute path.**
-
-You can change the port setting the PORT environmental variable: `sudo PORT=<port-number> serve <static-path>`.
+```
+serve ~/myproj
+```
+- `sudo` may be necessary.
+- If a static path is not provided the current directory content will be served.
+- You can change the port setting the PORT environmental variable: `PORT=4433 serve ~/myproj`.
 
 
 ### Use as module
-Install the dependency with `npm install -s https-localhost`.  
+Install the dependency
+```
+npm i -s https-localhost
+```
 
-Put in your index.js file:
+Put in your `index.js` file:
 ```
 const app = require("https-localhost")
 // app is an express app, do what you usually do with express
 app.listen(port)
 ```
-If the port number is not provided, it will listen on 443.
+- If the port number is not provided, it will listen on 443.
+- To redirect the http traffic to https use `app.redirect()`.
+- You can serve static files with `app.serve(path)`.
 
-To redirect the http traffic to https use `app.redirect()`.
+## Why and how it works
+Serving static content on localhost in a trusted SSL connection is not so simple.  
+It requires to manually generate and trust certificates, with complicate commands and many manual steps.
 
-You can also serve static files with `app.serve(path)`
+sserve, serves static content using a locally-trusted certificate, generated with the well-knowed [mkcert](https://github.com/FiloSottile/mkcert) tool.
 
+When you install sserve it automatically creates and installs a local CA in the system (and browsers) root store, and generates the certificate for you.  
+No configuration is required, just lunch the tool and we take care of everything you need.
 
-### [Optional] Trust the certificate
-**If you are not on MacOS or Ubuntu, you should follow this instructions.**
+### Supported root stores
+_The supported root stores are the one supported by mkcert.  
+Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/master/README.md#supported-root-stores)._
 
-After `npm install` will run a script that tries to install and validate automatically the certificate.
-However, this script is in beta and provided as-is, so there isn't any guarantee that will work.
-For that reason you can also install the certificate manually, as follows.
-
-If you decide to not install it, it's fine, the package still work.
-However, visiting localhost there will be a invalid certificate issue.
-
-To trust the certificate just add the [cert/defaultCA.pem](cert/defaultCA.pem) certificate
-to your list of trusted certificates.
-
-This step depends on the operating system you're running:
-- Mac OS:
-    open Keychain Access, choose System from the left navigation bar, choose "Import items..." from the File app
-menu and select the file. Then double-click on the certificate and select always-trust in the Trust panel.
-- Linux:
-    Depending on your Linux distribution, you can use `trust`, `update-ca-certificates`
-or another command to mark the generated root certificate as trusted.
-
-#### TL;DR
-Looking for something easier? Take a look to [mkcert](https://github.com/FiloSottile/mkcert) (requires Go).
-
-Install it, then move into the https-localhost folder and run:
-```
-mkcert -install
-mkcert -cert-file cert/localhost.crt -key-file cert/localhost.key localhost
-```
+**Here there is a handy copy:**
+- macOS system store
+- Windows system store
+- Linux variants that provide either
+    - `update-ca-trust` (Fedora, RHEL, CentOS) or
+    - `update-ca-certificates` (Ubuntu, Debian) or
+    - `trust` (Arch)
+- Firefox (macOS and Linux only)
+- Chrome and Chromium
+- Java (when `JAVA_HOME` is set)
 
 
-### License
-[AGPL-3.0](LICENSE)
+## License
+Is released under [AGPL-3.0 - GNU Affero General Public License v3.0](LICENSE).
+
+### Briefly:
+- modification and redistribution allowed for both private and **commercial use**
+- you must **grant patent rigth to the owner and to all the contributors**
+- you must **keep it open source** and distribute under the **same license**
+- changes must be documented
+- include a limitation of liability and it **does not provide any warranty**
+
+### Warranty
+THIS TOOL IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.
+For the full warranty check the [LICENSE](LICENSE).
