@@ -80,6 +80,22 @@ describe("Testing https-localhost", () => {
         res.data.toString() === fs.readFileSync("test/static.html").toString()))
   })
 
+  it("doesn't crash on 404", async function() {
+    // start the server (serving the default folder)
+    app.serve()
+    // make the request and check the status code
+    await makeRequest("/do-not-exist")
+      .then(res => assert(res.statusCode === 404))
+  })
+
+  it("doesn't crash if the static path doesn't exists", async function() {
+    // start the server (serving a non existing folder)
+    app.serve("do-not-exists")
+    // make the request and check the status code
+    await makeRequest("/")
+      .then(res => assert(res.statusCode === 404))
+  })
+
   it("redirect http to https", async function() {
     // start the redirection
     await app.redirect(HTTP_PORT)

@@ -67,6 +67,10 @@ Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/mast
 - Java (when `JAVA_HOME` is set)
 
 
+## Troubleshooting
+https-localhost requires Node.js 7.6 or higher.  
+<small>If you need compatibility with previously Node.js versions let me know, I'll try to rearrange the code.</small>
+
 ## License
 Is released under [AGPL-3.0 - GNU Affero General Public License v3.0](LICENSE).
 
