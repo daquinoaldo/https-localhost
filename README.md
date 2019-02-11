@@ -68,8 +68,17 @@ Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/mast
 
 
 ## Troubleshooting
+### Node.js version
 https-localhost requires Node.js 7.6 or higher.  
-<small>If you need compatibility with previously Node.js versions let me know, I'll try to rearrange the code.</small>
+<sub>If you need compatibility with previously Node.js versions let me know, I'll try to rearrange the code.</sub>
+
+### RangeError
+```
+RangeError: Invalid typed array length: -4095
+```
+It is a known bug of `spdy` with some old Node.js versions. Try to update Node.js to the latest release, or to the most stable LTS version.
+
+I've tried to reproduce this error without any success (checkout the [Travis build logs](https://travis-ci.org/daquinoaldo/https-localhost)). If you can help please open an issue and descrive as better as you can how to reproduce it, I'll be happy to help you.
 
 ## License
 Is released under [AGPL-3.0 - GNU Affero General Public License v3.0](LICENSE).
