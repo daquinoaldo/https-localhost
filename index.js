@@ -4,7 +4,8 @@ const path = require("path")
 const fs = require("fs")
 const http = require("http")
 // spdy allows http2, while waiting express to support the http2 module
-const https = require("spdy")
+const https = process.env.NODE_ENV === "production"
+  ? require("spdy") : require("https")
 const express = require("express")
 const compression = require("compression")
 const minify = require("express-minify")
@@ -35,9 +36,12 @@ app.listen = function(port = process.env.PORT ||
 }
 
 // use gzip compression minify
-app.use(compression({ threshold: 1 }))
-app.use(minify())
-app.set("json spaces", 0)
+if (process.env.NODE_ENV === "production") {
+  console.log("HOLA")
+  app.use(compression({ threshold: 1 }))
+  app.use(minify())
+  app.set("json spaces", 0)
+}
 
 /* SETUP USEFUL FUNCTIONS */
 
