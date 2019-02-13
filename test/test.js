@@ -15,7 +15,7 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
     port: port,
     path: path,
     method: "GET",
-    headers: { },
+    headers: { "accept-encoding": "gzip" },
     rejectUnauthorized: false
   }
   const protocol = secure ? https : http
@@ -26,7 +26,8 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
       resp.on("data", chunk => data += chunk)
       resp.on("end", () => resolve({
         data: data,
-        statusCode: resp.statusCode
+        statusCode: resp.statusCode,
+        headers: resp.headers
       }))
     }).on("error", err => reject(err))
       .end()
@@ -61,8 +62,6 @@ describe("Testing https-localhost", () => {
   })
 
   it("serves static files from custom path", async function() {
-    // set the environment port
-    process.env.PORT = HTTPS_PORT
     // start the server (serving the test folder)
     app.serve("test", HTTPS_PORT)
     // make the request and check the output
@@ -72,6 +71,8 @@ describe("Testing https-localhost", () => {
   })
 
   it("serves static files from default path and env port", async function() {
+    // set the environment port
+    process.env.PORT = HTTPS_PORT
     // start the server (serving the default folder)
     app.serve()
     // make the request and check the output
@@ -102,5 +103,20 @@ describe("Testing https-localhost", () => {
     // make the request and check the status
     await makeRequest("/", false, HTTP_PORT)
       .then(res => assert(res.statusCode === 301))
+  })
+
+  // IMPORTANT: this test MUST be the latest one, always.
+  // It delete the cache og the index module,
+  // so the variable app is broken after this test.
+  it("is ready for production", async function() {
+    // set NODE_ENV to production
+    delete require.cache[require.resolve("../index.js")]
+    process.env.NODE_ENV = "production"
+    const production = require("../index.js")
+    // start the server (serving the test folder)
+    production.serve("test", HTTPS_PORT)
+    // make the request and check the output
+    await makeRequest("/static.html")
+      .then(res => assert(res.headers["content-encoding"] === "gzip"))
   })
 })
