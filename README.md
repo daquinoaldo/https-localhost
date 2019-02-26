@@ -6,7 +6,7 @@ It works with MacOS, Linux and Windows, on Chrome and Firefox, and requires you 
 
 [![NPM](https://nodei.co/npm/https-localhost.png)](https://nodei.co/npm/https-localhost/)
 
-[![Build status](https://travis-ci.org/daquinoaldo/https-localhost.svg?branch=master)](https://travis-ci.org/daquinoaldo/https-localhost)
+[![Build Status](https://travis-ci.com/daquinoaldo/https-localhost.svg?branch=master)](https://travis-ci.com/daquinoaldo/https-localhost)
 [![Coverage Status](https://coveralls.io/repos/github/daquinoaldo/https-localhost/badge.svg?branch=master)](https://coveralls.io/github/daquinoaldo/https-localhost?branch=master)
 [![Dependency Status](https://img.shields.io/david/daquinoaldo/https-localhost.svg)](https://david-dm.org/daquinoaldo/https-localhost)
 [![Known Vulnerabilities](https://snyk.io/test/npm/https-localhost/badge.svg)](https://snyk.io/test/npm/https-localhost)
