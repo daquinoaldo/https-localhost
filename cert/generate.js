@@ -13,7 +13,7 @@ function getExe() {
       return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
     case "linux":
       return "mkcert-" + MKCERT_VERSION + "-linux-amd64"
-    case "windows":
+    case "win32":
       return "mkcert-" + MKCERT_VERSION + "-windows-amd64.exe"
     default:
       console.warn("Cannot generate the localhost certificate on your " +
