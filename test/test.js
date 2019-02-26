@@ -4,6 +4,7 @@ const http = require("http")
 const https = require("https")
 
 const app = require("../index.js")
+const install = require("../cert/generate.js")
 
 const HTTPS_PORT = 4443
 const HTTP_PORT = 8080
@@ -118,5 +119,17 @@ describe("Testing https-localhost", () => {
     // make the request and check the output
     await makeRequest("/static.html")
       .then(res => assert(res.headers["content-encoding"] === "gzip"))
+  })
+})
+
+// TESTS
+describe("Testing the installation script", function() {
+  // timeout 5 min
+  this.timeout(300000)
+
+  it("installs correctly", async function() {
+    await install()
+    assert(fs.existsSync("cert/localhost.crt"))
+    assert(fs.existsSync("cert/localhost.key"))
   })
 })

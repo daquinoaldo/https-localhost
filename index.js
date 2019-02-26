@@ -37,7 +37,6 @@ app.listen = function(port = process.env.PORT ||
 
 // use gzip compression minify
 if (process.env.NODE_ENV === "production") {
-  console.log("HOLA")
   app.use(compression({ threshold: 1 }))
   app.use(minify())
   app.set("json spaces", 0)

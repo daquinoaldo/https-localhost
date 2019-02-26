@@ -8,12 +8,13 @@ const MKCERT_VERSION = "v1.3.0"
 
 // get the executable name
 function getExe() {
+  /* istanbul ignore next: tested on all platform on travis */
   switch (process.platform) {
     case "darwin":
       return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
     case "linux":
       return "mkcert-" + MKCERT_VERSION + "-linux-amd64"
-    case "windows":
+    case "win32":
       return "mkcert-" + MKCERT_VERSION + "-windows-amd64.exe"
     default:
       console.warn("Cannot generate the localhost certificate on your " +
@@ -45,8 +46,9 @@ function mkcert(path, exe) {
     "-key-file " + path + "localhost.key localhost", (err, stdout, stderr) => {
       console.log(stdout)
       console.error(stderr)
+      /* istanbul ignore if: cannot be tested */
       if (err) reject(err)
-      else resolve()
+      resolve()
     })
   })
 }
@@ -66,6 +68,7 @@ async function main() {
 }
 
 // run as script
+/* istanbul ignore if: cannot be tested */
 if (require.main === module)
   try { main() } catch (err) { console.error("\nExec error: " + err) }
 
