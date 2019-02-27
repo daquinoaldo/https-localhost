@@ -13,7 +13,7 @@
     "start": "node index.js"
   },
   "bin": {
-    "serve": "./index.js"
+    "serve": "index.js"
   },
   "repository": {
     "type": "git",
