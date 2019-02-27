@@ -1,14 +1,14 @@
 {
   "name": "https-localhost",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
     "pretest": "eslint --ignore-path .gitignore .",
-    "test": "./node_modules/nyc/bin/nyc.js ./node_modules/mocha/bin/_mocha --exit",
-    "posttest": "./node_modules/nyc/bin/nyc.js report --reporter=html",
-    "only-test": "./node_modules/mocha/bin/_mocha --exit",
-    "coveralls": "./node_modules/nyc/bin/nyc.js report --reporter=text-lcov | ./node_modules/coveralls/bin/coveralls.js",
+    "test": "node node_modules/nyc/bin/nyc.js node_modules/mocha/bin/_mocha --exit",
+    "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=html",
+    "only-test": "node node_modules/mocha/bin/_mocha --exit",
+    "coveralls": "node node_modules/nyc/bin/nyc.js report --reporter=text-lcov | node_modules/coveralls/bin/coveralls.js",
     "postinstall": "node cert/generate.js",
     "start": "node index.js"
   },

@@ -57,7 +57,8 @@ async function main() {
   const url = "https://github.com/FiloSottile/mkcert/releases/download/" +
     MKCERT_VERSION + "/"
   const exe = getExe()
-  const path = "cert/"
+  const path = "cert" + /* istanbul ignore next: cannot be tested */
+    (process.platform === "win32" ? "\\" : "/")
   // download the executable
   await download(url + exe, path + exe)
   // make binary executable
