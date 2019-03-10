@@ -127,8 +127,6 @@ describe("Testing the installation script", function() {
   this.timeout(300000)
 
   it("installs correctly", async function() {
-    // Cannot test on Travis on Windows
-    if (process.env.TRAVIS && process.platform === "win32") return
     await require("../cert/generate.js")()
     assert(fs.existsSync("cert/localhost.crt"))
     assert(fs.existsSync("cert/localhost.key"))
