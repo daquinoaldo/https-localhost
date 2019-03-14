@@ -54,11 +54,19 @@ function mkcert(path, exe) {
 }
 
 async function main() {
+  console.info("Generating certificates...")
+  const path = "cert" + /* istanbul ignore next: cannot be tested */
+    (process.platform === "win32" ? "\\" : "/")
+  // Check if files already exists
+  if (fs.existsSync(path + "localhost.crt") &&
+    /* istanbul ignore next: not relevant */
+    fs.existsSync(path + "localhost.key")) {
+    console.info("Certificates already exists. Skip.")
+    return
+  }
   const url = "https://github.com/FiloSottile/mkcert/releases/download/" +
     MKCERT_VERSION + "/"
   const exe = getExe()
-  const path = "cert" + /* istanbul ignore next: cannot be tested */
-    (process.platform === "win32" ? "\\" : "/")
   // download the executable
   await download(url + exe, path + exe)
   // make binary executable

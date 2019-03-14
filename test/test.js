@@ -34,7 +34,28 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
   })
 }
 
-// TESTS
+// TESTS INSTALL
+describe("Testing the installation script", function() {
+  // timeout 5 min
+  this.timeout(300000)
+
+  // remove a file, this will force the reinstallation
+  fs.unlinkSync("cert/localhost.crt")
+
+  it("installs correctly", async function() {
+    await require("../cert/generate.js")()
+    assert(fs.existsSync("cert/localhost.crt"))
+    assert(fs.existsSync("cert/localhost.key"))
+  })
+
+  it("skips installation if files exists", async function() {
+    await require("../cert/generate.js")()
+    assert(fs.existsSync("cert/localhost.crt"))
+    assert(fs.existsSync("cert/localhost.key"))
+  })
+})
+
+// TESTS MODULE
 describe("Testing https-localhost", () => {
   // close the server after each test
   afterEach(() => app.server.close())
@@ -118,17 +139,5 @@ describe("Testing https-localhost", () => {
     // make the request and check the output
     await makeRequest("/static.html")
       .then(res => assert(res.headers["content-encoding"] === "gzip"))
-  })
-})
-
-// TESTS
-describe("Testing the installation script", function() {
-  // timeout 5 min
-  this.timeout(300000)
-
-  it("installs correctly", async function() {
-    await require("../cert/generate.js")()
-    assert(fs.existsSync("cert/localhost.crt"))
-    assert(fs.existsSync("cert/localhost.key"))
   })
 })
