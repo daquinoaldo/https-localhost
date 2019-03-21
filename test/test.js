@@ -34,27 +34,6 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
   })
 }
 
-// TESTS INSTALL
-describe("Testing the installation script", function() {
-  // timeout 5 min
-  this.timeout(300000)
-
-  // remove a file, this will force the reinstallation
-  fs.unlinkSync("cert/localhost.crt")
-
-  it("installs correctly", async function() {
-    await require("../cert/generate.js")()
-    assert(fs.existsSync("cert/localhost.crt"))
-    assert(fs.existsSync("cert/localhost.key"))
-  })
-
-  it("skips installation if files exists", async function() {
-    await require("../cert/generate.js")()
-    assert(fs.existsSync("cert/localhost.crt"))
-    assert(fs.existsSync("cert/localhost.key"))
-  })
-})
-
 // TESTS MODULE
 describe("Testing https-localhost", () => {
   // close the server after each test
@@ -91,15 +70,15 @@ describe("Testing https-localhost", () => {
         res.data.toString() === fs.readFileSync("test/static.html").toString()))
   })
 
-  it("serves static files from default path and env port", async function() {
+  it("serves static files from default env port", async function() {
     // set the environment port
     process.env.PORT = HTTPS_PORT
     // start the server (serving the default folder)
-    app.serve()
+    app.serve("test")
     // make the request and check the output
-    await makeRequest("/test/static.html")
-      .then(res => assert(
-        res.data.toString() === fs.readFileSync("test/static.html").toString()))
+    await makeRequest("/static.html")
+      .then(res => assert(res.data.toString() ===
+          fs.readFileSync("test/static.html").toString()))
   })
 
   it("doesn't crash on 404", async function() {
@@ -108,6 +87,19 @@ describe("Testing https-localhost", () => {
     // make the request and check the status code
     await makeRequest("/do-not-exist")
       .then(res => assert(res.statusCode === 404))
+  })
+
+  it("looks for a 404.html file", async function() {
+    // start the server (serving the default folder)
+    await app.serve("test", HTTPS_PORT)
+    // make the request and check the result
+    await makeRequest("/do-not-exist.html")
+      .then(res => {
+        console.log(res)
+        assert(res.statusCode === 404)
+        assert(res.data.toString() ===
+          fs.readFileSync("test/404.html").toString())
+      })
   })
 
   it("doesn't crash if the static path doesn't exists", async function() {

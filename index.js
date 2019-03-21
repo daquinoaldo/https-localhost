@@ -55,10 +55,23 @@ app.redirect = function(
 }
 
 // serve static content, usage `app.serve([path])`
-app.serve = function(path = process.cwd(), port = process.env.PORT ||
+app.serve = function(staticPath = process.cwd(), port = process.env.PORT ||
 /* istanbul ignore next: cannot be tested on Travis */ 443) {
-  app.use(express.static(path))
-  console.info("Serving static path: " + path)
+  app.use(express.static(staticPath))
+  // redirect 404 to 404.html or to index.html
+  app.use((req, res) => {
+    if (!staticPath.startsWith("/"))
+      staticPath = process.cwd() + "/" + staticPath
+    const p404 = staticPath + "/404.html"
+    const index = staticPath + "/index.html"
+    // istanbul ignore else: not interesting
+    if (fs.existsSync(p404))
+      res.status(404).sendFile(p404)
+    else if (fs.existsSync(index))
+      res.status(404).sendFile(index)
+    else res.status(404).send(req.path + " not found.")
+  })
+  console.info("Serving static path: " + staticPath)
   app.listen(port)
 }
 
