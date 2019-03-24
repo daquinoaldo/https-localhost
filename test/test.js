@@ -3,7 +3,7 @@ const fs = require("fs")
 const http = require("http")
 const https = require("https")
 
-const app = require("../index.js")
+const app = require("../index.js")()
 
 const HTTPS_PORT = 4443
 const HTTP_PORT = 8080
@@ -125,7 +125,7 @@ describe("Testing https-localhost", () => {
     // set NODE_ENV to production
     delete require.cache[require.resolve("../index.js")]
     process.env.NODE_ENV = "production"
-    const production = require("../index.js")
+    const production = require("../index.js")()
     // start the server (serving the test folder)
     production.serve("test", HTTPS_PORT)
     // make the request and check the output
