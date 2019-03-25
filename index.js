@@ -80,6 +80,7 @@ const createServer = () => {
 
   return app
 }
+
 /* MAIN */
 
 // usage: `serve [<path>]` or `node index.js [<path>]`
