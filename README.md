@@ -22,7 +22,22 @@ serve ~/myproj
 ```
 - `sudo` may be necessary.
 - If a static path is not provided the current directory content will be served.
-- You can change the port setting the PORT environmental variable: `PORT=4433 serve ~/myproj`. Specifying port number will also prevent http to https redirect.
+- You can change the **port** setting the `PORT` environmental variable: `PORT=4433 serve ~/myproj`. Specifying port number will also prevent http to https redirect.
+
+### Binaries
+If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
+```
+// Linux
+./https-localhost-linux ~/myproj
+
+// MacOS
+./https-localhost-macos ~/myproj
+
+// Windows
+./https-localhost-win.exe C:\User\me\myproj
+```
+**Tip 1:** on Windows just drag the folder on the executable to serve itV.  
+**Tip 2:** on all platform put the executable on the folder you want to serve and double-click it.
 
 
 ## Use as module
@@ -37,9 +52,12 @@ const app = httpLocalhost()
 // app is an express app, do what you usually do with express
 app.listen(port)
 ```
-- If the port number is not provided, it will listen on 443.
-- To redirect the http traffic to https use `app.redirect()`.
-- You can serve static files with `app.serve(path)`.
+- If the **port** number is not provided, it will listen on 443.
+- To **redirect** the http traffic to https use `app.redirect()`.
+- You can serve **static files** with `app.serve(path)`.
+
+**Tip:** consider installing it as a dev dependency: this is not a production tool!  
+`npm i --save-dev https-localhost`
 
 
 ## Production

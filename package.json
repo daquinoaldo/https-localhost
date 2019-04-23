@@ -9,10 +9,19 @@
     "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=html",
     "coveralls": "node node_modules/nyc/bin/nyc.js report --reporter=text-lcov | node_modules/coveralls/bin/coveralls.js",
     "preuninstall": "node certs.js -u",
+    "build": "pkg --out-path build .",
     "start": "node index.js"
   },
   "bin": {
     "serve": "index.js"
+  },
+  "pkg": {
+    "scripts": "*.js",
+    "targets": [
+      "node10-macos-x64",
+      "node10-linux-x64",
+      "node10-win-x64"
+    ]
   },
   "repository": {
     "type": "git",
@@ -51,6 +60,7 @@
     "eslint-plugin-standard": "^4.0.0",
     "mocha": "^6.1.4",
     "nyc": "^14.0.0",
+    "pkg": "^4.3.7",
     "sinon": "^7.3.2"
   }
 }
