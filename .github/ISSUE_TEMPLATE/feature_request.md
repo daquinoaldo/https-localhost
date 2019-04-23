@@ -4,17 +4,11 @@ about: Suggest an idea for this project
 
 ---
 
-**Is your feature request related to a problem?**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**How would you like to expand the functionalities?**
+A description of what the new feature aim should be.
 
-**or you would like to expand the functionalities with...**
-A clear and concise description of what the new feature aim should be.
+**Are there alternatives?**
+Workaround, etc...
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**Is it a breaking change?**
+It changes how the users interact with this tool?
