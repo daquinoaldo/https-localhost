@@ -1,9 +1,13 @@
 const assert = require("assert")
 const fs = require("fs")
+const path = require("path")
 const http = require("http")
 const https = require("https")
 
+const sinon = require("sinon")
+
 const app = require("../index.js")()
+const certs = require("../certs.js")
 
 const HTTPS_PORT = 4443
 const HTTP_PORT = 8080
@@ -33,6 +37,65 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
       .end()
   })
 }
+
+// TEST CERTFICATES
+describe("Testing certificates generation", function() {
+  // timeout 5 min, since requires the mkcert executable download
+  this.timeout(300000)
+
+  it("can be uninstalled", () => {
+    certs.remove()
+  })
+
+  it("uninstall is idempotent (doesn't fail if called twice)", () => {
+    certs.remove()
+  })
+
+  it("can be installed", function(done) {
+    certs.generate().then(done)
+  })
+
+  it("can be installed at first run", function(done) {
+    // inner async function
+    (async() => {
+      // remove certs
+      certs.remove()
+      // prepare the server with a mock response
+      app.get("/test/module", (req, res) => res.send("TEST"))
+      // start the server
+      await app.listen(HTTPS_PORT)
+      // make the request and check the output
+      await makeRequest("/test/module")
+        .then(res => assert(res.data === "TEST"))
+      // close the server
+      app.server.close()
+      done()
+    })()
+  })
+
+  it("crashes if certs doesn't exists in custom folder", function(done) {
+    // inner async function
+    (async() => {
+      // set a non-existent custom cert path
+      process.env.CERT_PATH = path.join("not", "exist")
+      // stub the exit function
+      sinon.stub(process, "exit")
+      // listen
+      await app.listen(HTTPS_PORT)
+      // should exit 1
+      assert(process.exit.isSinonProxy)
+      assert(process.exit.called)
+      assert(process.exit.calledWith(1))
+      // close the server
+      app.server.close()
+      // restore the exit
+      process.exit.restore()
+      // restore the CERT_PATH to undefined
+      delete process.env.CERT_PATH
+      done()
+    })()
+  })
+})
 
 // TESTS MODULE
 describe("Testing https-localhost", () => {
@@ -95,7 +158,6 @@ describe("Testing https-localhost", () => {
     // make the request and check the result
     await makeRequest("/do-not-exist.html")
       .then(res => {
-        console.log(res)
         assert(res.statusCode === 404)
         assert(res.data.toString() ===
           fs.readFileSync("test/404.html").toString())

@@ -12,16 +12,17 @@ It works with MacOS, Linux and Windows, on Chrome and Firefox, and requires you 
 [![Known Vulnerabilities](https://snyk.io/test/npm/https-localhost/badge.svg)](https://snyk.io/test/npm/https-localhost)
 [![GitHub issues](https://img.shields.io/github/issues/daquinoaldo/https-localhost.svg)](https://github.com/daquinoaldo/https-localhost/issues)
 
+
 ## Install and use standalone
 ```
-npm i -g https-localhost
+npm i -g --only=prod https-localhost
 ```
 ```
 serve ~/myproj
 ```
 - `sudo` may be necessary.
 - If a static path is not provided the current directory content will be served.
-- You can change the port setting the PORT environmental variable: `PORT=4433 serve ~/myproj`.
+- You can change the port setting the PORT environmental variable: `PORT=4433 serve ~/myproj`. Specifying port number will also prevent http to https redirect.
 
 
 ## Use as module
@@ -40,6 +41,7 @@ app.listen(port)
 - To redirect the http traffic to https use `app.redirect()`.
 - You can serve static files with `app.serve(path)`.
 
+
 ## Production
 This tool has a production version that activates **HTTP/2**, **compression** and **minify**.
 ```
@@ -48,6 +50,7 @@ NODE_ENV=production serve ~/myproj
 I decide to not activate it by default since it is usually an unwanted behaviour for localhost testing, but sometimes it could be userful, e.g. to test Progressive Web Application or more ingeneral the website performances.
 
 **IMPORTANT**: the fact that there is a production enviornment doesn't mean that this tool is suitable for production. It's intended to be used only for local testing.
+
 
 ## Why and how it works
 Serving static content on localhost in a trusted SSL connection is not so simple.  
@@ -79,6 +82,10 @@ Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/mast
 https-localhost requires Node.js 7.6 or higher.  
 <sub>If you need compatibility with previously Node.js versions let me know, I'll try to rearrange the code.</sub>
 
+### root required
+-  **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ serve ~/myproj`.
+- **At each run** the password may be required to run the server on port 443 and 80. To avoid the script ask for password specify a different port number: `PORT=4433 serve ~/myproj`.
+
 ### RangeError
 ```
 RangeError: Invalid typed array length: -4095
@@ -88,6 +95,12 @@ It is a known bug of `spdy` that is present sometimes with some old Node.js vers
 It should be present only with `NODE_ENV=production`, hence the easiest fix is to avoid using the production env. Anyway, if you need the production env, you can try to update Node.js to the latest release, or to the most stable LTS version.
 
 I've tried to reproduce this error without any success (checkout the [Travis build logs](https://travis-ci.org/daquinoaldo/https-localhost)). If you can help please open an issue and describe as better as you can how to reproduce it, I'll be happy to help you.
+
+
+## Contributing
+Each contribute is welcome!  
+Please, checkout the [contributing guidelines](.github/CONTRIBUTING.md).
+
 
 ## License
 Is released under [AGPL-3.0 - GNU Affero General Public License v3.0](LICENSE).
