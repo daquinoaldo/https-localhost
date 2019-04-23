@@ -79,12 +79,18 @@ Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/mast
 
 ## Troubleshooting
 ### Node.js version
-https-localhost requires Node.js 7.6 or higher.  
+https-localhost requires Node.js 8 or higher.  
 <sub>If you need compatibility with previously Node.js versions let me know, I'll try to rearrange the code.</sub>
 
 ### root required
 -  **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ serve ~/myproj`.
 - **At each run** the password may be required to run the server on port 443 and 80. To avoid the script ask for password specify a different port number: `PORT=4433 serve ~/myproj`.
+
+### EACCES
+Run with sudo to use the default ports 443 and 80. You can also change port with: `PORT=4433 serve ~/myproj`.
+
+### EADDRINUSE
+Another service on your machine is using port 443 or port 80. Stop it or change port with `PORT=4433 serve ~/myproj`.
 
 ### RangeError
 ```
