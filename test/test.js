@@ -3,7 +3,10 @@ const fs = require("fs")
 const http = require("http")
 const https = require("https")
 
-const app = require("../index.js")()
+const sinon = require("sinon")
+
+let app = require("../index.js")()
+const certs = require("../certs.js")
 
 const HTTPS_PORT = 4443
 const HTTP_PORT = 8080
@@ -34,102 +37,193 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
   })
 }
 
+// TEST CERTFICATES
+describe("Testing certs", function() {
+  // timeout 5 min, since requires the mkcert executable download
+  this.timeout(300000)
+
+  it("can be uninstalled", () => {
+    certs.remove()
+  })
+
+  it("uninstall is idempotent (doesn't fail if called twice)", () => {
+    certs.remove()
+  })
+
+  it("can be installed", function(done) {
+    certs.generate().then(done)
+  })
+
+  it("can be installed at first run", function(done) {
+    // inner async function
+    (async() => {
+      // remove certs
+      certs.remove()
+      // prepare the server with a mock response
+      app.get("/test/module", (req, res) => res.send("TEST"))
+      // start the server
+      await app.listen(HTTPS_PORT)
+      // make the request and check the output
+      await makeRequest("/test/module")
+        .then(res => assert(res.data === "TEST"))
+      // close the server
+      app.server.close()
+      done()
+    })()
+  })
+
+  it("crashes if certs doesn't exists in custom folder", function(done) {
+    // inner async function
+    (async() => {
+      // set a non-existent custom cert path
+      process.env.CERT_PATH = "does-not-exist"
+      // stub the exit function
+      sinon.stub(process, "exit")
+      // listen
+      await app.listen(HTTPS_PORT)
+      // should exit 1
+      assert(process.exit.calledWith(1))
+      process.exit.restore()
+      // close the server
+      app.server.close()
+      // restore the CERT_PATH to undefined
+      delete process.env.CERT_PATH
+      done()
+    })()
+  })
+})
+
 // TESTS MODULE
-describe("Testing https-localhost", () => {
+describe("Testing module", () => {
   // close the server after each test
   afterEach(() => app.server.close())
 
-  it("works as a module as custom express app", async function() {
-    // prepare the server with a mock response
-    app.get("/test/module", (req, res) => res.send("TEST"))
-    // start the server
-    await app.listen(HTTPS_PORT)
-    // make the request and check the output
-    await makeRequest("/test/module")
-      .then(res => assert(res.data === "TEST"))
+  it("works as express app", function(done) {
+    (async() => {
+      // prepare the server with a mock response
+      app.get("/test/module", (req, res) => res.send("TEST"))
+      // start the server
+      await app.listen(HTTPS_PORT)
+      // make the request and check the output
+      await makeRequest("/test/module")
+        .then(res => assert(res.data === "TEST"))
+      done()
+    })()
   })
 
-  it("works with environment port", async function() {
-    // prepare the server with a mock response
-    app.get("/test/module", (req, res) => res.send("TEST"))
-    // set the environment port
-    process.env.PORT = HTTPS_PORT
-    // start the server
-    await app.listen()
-    // make the request and check the output
-    await makeRequest("/test/module")
-      .then(res => assert(res.data === "TEST"))
+  it("works with environment port", function(done) {
+    (async() => {
+      // prepare the server with a mock response
+      app.get("/test/module", (req, res) => res.send("TEST"))
+      // set the environment port
+      process.env.PORT = HTTPS_PORT
+      // start the server
+      await app.listen()
+      // make the request and check the output
+      await makeRequest("/test/module")
+        .then(res => assert(res.data === "TEST"))
+      done()
+    })()
   })
+})
 
-  it("serves static files from custom path", async function() {
-    // start the server (serving the test folder)
-    app.serve("test", HTTPS_PORT)
-    // make the request and check the output
-    await makeRequest("/static.html")
-      .then(res => assert(
-        res.data.toString() === fs.readFileSync("test/static.html").toString()))
-  })
+describe("Testing serve", () => {
+  // close the server after each test
+  afterEach(() => app.server.close())
 
-  it("serves static files from default env port", async function() {
-    // set the environment port
-    process.env.PORT = HTTPS_PORT
-    // start the server (serving the default folder)
-    app.serve("test")
-    // make the request and check the output
-    await makeRequest("/static.html")
-      .then(res => assert(res.data.toString() ===
+  it("serves static files from custom path", function(done) {
+    (async() => {
+      // start the server (serving the test folder)
+      app.serve("test", HTTPS_PORT)
+      // make the request and check the output
+      await makeRequest("/static.html")
+        .then(res => assert(res.data.toString() ===
           fs.readFileSync("test/static.html").toString()))
+      done()
+    })()
   })
 
-  it("doesn't crash on 404", async function() {
-    // start the server (serving the default folder)
-    app.serve()
-    // make the request and check the status code
-    await makeRequest("/do-not-exist")
-      .then(res => assert(res.statusCode === 404))
+  it("serves static files from default env port", function(done) {
+    (async() => {
+      // set the environment port
+      process.env.PORT = HTTPS_PORT
+      // start the server (serving the default folder)
+      app.serve("test")
+      // make the request and check the output
+      await makeRequest("/static.html")
+        .then(res => assert(res.data.toString() ===
+            fs.readFileSync("test/static.html").toString()))
+      done()
+    })()
   })
 
-  it("looks for a 404.html file", async function() {
-    // start the server (serving the default folder)
-    await app.serve("test", HTTPS_PORT)
-    // make the request and check the result
-    await makeRequest("/do-not-exist.html")
-      .then(res => {
-        console.log(res)
-        assert(res.statusCode === 404)
-        assert(res.data.toString() ===
-          fs.readFileSync("test/404.html").toString())
-      })
+  it("doesn't crash on 404", function(done) {
+    (async() => {
+      // start the server (serving the default folder)
+      app.serve()
+      // make the request and check the status code
+      await makeRequest("/do-not-exist")
+        .then(res => assert(res.statusCode === 404))
+      done()
+    })()
   })
 
-  it("doesn't crash if the static path doesn't exists", async function() {
-    // start the server (serving a non existing folder)
-    app.serve("do-not-exists")
-    // make the request and check the status code
-    await makeRequest("/")
-      .then(res => assert(res.statusCode === 404))
+  it("looks for a 404.html file", function(done) {
+    (async() => {
+      // start the server (serving the default folder)
+      await app.serve("test", HTTPS_PORT)
+      // make the request and check the result
+      await makeRequest("/do-not-exist.html")
+        .then(res => {
+          assert(res.statusCode === 404)
+          assert(res.data.toString() ===
+            fs.readFileSync("test/404.html").toString())
+        })
+      done()
+    })()
   })
 
-  it("redirect http to https", async function() {
-    // start the redirection
-    await app.redirect(HTTP_PORT)
-    // make the request and check the status
-    await makeRequest("/", false, HTTP_PORT)
-      .then(res => assert(res.statusCode === 301))
+  it("doesn't crash if the static path doesn't exists", function(done) {
+    (async() => {
+      // start the server (serving a non existing folder)
+      app.serve("does-not-exist")
+      // make the request and check the status code
+      await makeRequest("/")
+        .then(res => assert(res.statusCode === 404))
+      done()
+    })()
+  })
+})
+
+// OTHER TESTS
+describe("Testing additional features", () => {
+  it("redirect http to https", function(done) {
+    (async() => {
+      // start the redirection
+      await app.redirect(HTTP_PORT)
+      // make the request and check the status
+      await makeRequest("/", false, HTTP_PORT)
+        .then(res => assert(res.statusCode === 301))
+      done()
+    })()
   })
 
-  // IMPORTANT: this test MUST be the latest one, always.
-  // It delete the cache og the index module,
-  // so the variable app is broken after this test.
-  it("is ready for production", async function() {
-    // set NODE_ENV to production
-    delete require.cache[require.resolve("../index.js")]
-    process.env.NODE_ENV = "production"
-    const production = require("../index.js")()
-    // start the server (serving the test folder)
-    production.serve("test", HTTPS_PORT)
-    // make the request and check the output
-    await makeRequest("/static.html")
-      .then(res => assert(res.headers["content-encoding"] === "gzip"))
+  it("is ready for production", function(done) {
+    (async() => {
+      // set NODE_ENV to production
+      delete require.cache[require.resolve("../index.js")]
+      process.env.NODE_ENV = "production"
+      app = require("../index.js")()
+      // start the server (serving the test folder)
+      app.serve("test", HTTPS_PORT)
+      // make the request and check the output
+      await makeRequest("/static.html")
+        .then(res => assert(res.headers["content-encoding"] === "gzip"))
+      // reset NODE_ENV and app
+      delete require.cache[require.resolve("../index.js")]
+      delete process.env.NODE_ENV
+      app = require("../index.js")()
+      done()
+    })()
   })
 })

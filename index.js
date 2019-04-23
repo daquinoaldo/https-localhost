@@ -7,37 +7,27 @@ const http = require("http")
 const https = process.env.NODE_ENV === "production"
   ? require("spdy") : require("https")
 const express = require("express")
-const compression = require("compression")
-const minify = require("express-minify")
+const getCerts = require(path.resolve(__dirname, "certs.js")).getCerts
 
 /* CONFIGURE THE SERVER */
 
 // SSL certificate
-let certOptions
-try {
-  certOptions = {
-    key: fs.readFileSync(path.resolve(__dirname, "cert/localhost.key")),
-    cert: fs.readFileSync(path.resolve(__dirname, "cert/localhost.crt"))
-  }
-} catch (e) /* istanbul ignore next: TODO, not so important */ {
-  console.error("Cannot find the certificates. Try to reinstall the module.")
-  process.exit(1)
-}
-
 const createServer = () => {
   // create a server with express
   const app = express()
 
   // override the default express listen method to use our server
-  app.listen = function(port = process.env.PORT ||
+  app.listen = async function(port = process.env.PORT ||
   /* istanbul ignore next: cannot be tested on Travis */ 443) {
-    app.server = https.createServer(certOptions, app).listen(port)
+    app.server = https.createServer(await getCerts(), app).listen(port)
     console.info("Server running on port " + port + ".")
     return app.server
   }
 
   // use gzip compression minify
   if (process.env.NODE_ENV === "production") {
+    const compression = require("compression")
+    const minify = require("express-minify")
     app.use(compression({ threshold: 1 }))
     app.use(minify())
     app.set("json spaces", 0)
@@ -90,9 +80,29 @@ if (require.main === module) {
   // retrieve the static path from the process argv or use the cwd
   // 1st is node, 2nd is serve or index.js, 3rd (if exists) is the path
   app.serve(process.argv.length === 3 ? process.argv[2] : process.cwd())
-  // redirect http to https
-  app.redirect()
+  // redirect http to https (only if https port is the default one)
+  if (!process.env.PORT) app.redirect()
 }
+
+/* istanbul ignore next: cannot be tested */
+process.on("uncaughtException", function(err) {
+  switch (err.errno) {
+    case "EACCES":
+      console.error(
+        "EACCES: run as administrator to use the default ports 443 and 80. " +
+        "You can also change port with: `PORT=4433 serve ~/myproj`.")
+      break
+    case "EADDRINUSE":
+      console.error("EADDRINUSE: another service on your machine is using " +
+      "port 443 or port 80.\nStop it or change port with:" +
+      "`PORT=4433 serve ~/myproj`.")
+      break
+    default:
+      console.error("Unexpected error " + err.errno + ":\n\n" + err)
+      break
+  }
+  process.exit(1)
+})
 
 // export as module
 module.exports = createServer

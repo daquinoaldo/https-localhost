@@ -1,19 +1,27 @@
 {
   "name": "https-localhost",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
     "pretest": "eslint --ignore-path .gitignore .",
     "test": "node node_modules/nyc/bin/nyc.js node_modules/mocha/bin/_mocha --exit",
     "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=html",
-    "only-test": "node node_modules/mocha/bin/_mocha --exit",
     "coveralls": "node node_modules/nyc/bin/nyc.js report --reporter=text-lcov | node_modules/coveralls/bin/coveralls.js",
-    "postinstall": "node cert/generate.js",
+    "preuninstall": "node certs.js -u",
+    "build": "pkg --out-path build .",
     "start": "node index.js"
   },
   "bin": {
     "serve": "index.js"
+  },
+  "pkg": {
+    "scripts": "*.js",
+    "targets": [
+      "node10-macos-x64",
+      "node10-linux-x64",
+      "node10-win-x64"
+    ]
   },
   "repository": {
     "type": "git",
@@ -36,6 +44,7 @@
   },
   "homepage": "https://daquinoaldo.github.io/https-localhost",
   "dependencies": {
+    "appdata-path": "^1.0.0",
     "compression": "^1.7.4",
     "express": "^4.16.4",
     "express-minify": "^1.0.0",
@@ -43,13 +52,15 @@
   },
   "devDependencies": {
     "coveralls": "^3.0.3",
-    "eslint": "^5.15.3",
+    "eslint": "^5.16.0",
     "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-node": "^8.0.1",
-    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-promise": "^4.1.1",
     "eslint-plugin-standard": "^4.0.0",
-    "mocha": "^6.0.2",
-    "nyc": "^13.3.0"
+    "mocha": "^6.1.4",
+    "nyc": "^14.0.0",
+    "pkg": "^4.3.7",
+    "sinon": "^7.3.2"
   }
 }

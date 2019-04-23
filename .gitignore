@@ -1,15 +1,10 @@
 # MacOS
 .DS_STORE
 
-# IDEs
-.idea
-*.iml
-
-# Node & npm
+# Node, npm & CI
 node_modules
 coverage
 .nyc_output
 
-# Certificates
-cert/localhost.*
-cert/mkcert-*
+# Build
+build
