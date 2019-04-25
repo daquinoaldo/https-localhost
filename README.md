@@ -110,6 +110,9 @@ Run with sudo to use the default ports 443 and 80. You can also change port with
 ### EADDRINUSE
 Another service on your machine is using port 443 or port 80. Stop it or change port with `PORT=4433 serve ~/myproj`.
 
+### Unable to run on Windows
+Windows users with spaces or quotes in the name (like Aldo D'Aquino) may experience some problems in running the script. You can try to escape this chars or put the entire path between double quotes, but I suggest you to switch to a better user name (like aldodaquino).
+
 ### RangeError
 ```
 RangeError: Invalid typed array length: -4095
