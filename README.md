@@ -27,13 +27,13 @@ serve ~/myproj
 ### Binaries
 If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
 ```
-// Linux
+# Linux
 ./https-localhost-linux ~/myproj
 
-// MacOS
+# MacOS
 ./https-localhost-macos ~/myproj
 
-// Windows
+# Windows
 ./https-localhost-win.exe C:\User\me\myproj
 ```
 **Tip 1:** on Windows just drag the folder on the executable to serve itV.  
@@ -48,7 +48,7 @@ npm i -s https-localhost
 Then put in your `index.js` file:
 ```
 const httpsLocalhost = require("https-localhost")
-const app = httpLocalhost()
+const app = httpsLocalhost()
 // app is an express app, do what you usually do with express
 app.listen(port)
 ```
