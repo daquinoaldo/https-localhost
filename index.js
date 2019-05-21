@@ -37,13 +37,15 @@ const createServer = () => {
 
   // redirect http to https, usage `app.redirect()`
   app.redirect = function(
-  /* istanbul ignore next: cannot be tested on Travis */ port = 80) {
+    /* istanbul ignore next: cannot be tested on Travis */ httpPort = 80,
+    httpsPort = process.env.PORT || 443) {
     app.http = http.createServer((req, res) => {
       res.writeHead(301, {
-        Location: "https://" + req.headers["host"] + req.url
+        Location: "https://" + req.headers["host"].replace(":" + httpPort, "") +
+          (httpsPort !== 443 ? ":" + httpsPort : "") + req.url
       })
       res.end()
-    }).listen(port)
+    }).listen(httpPort)
     console.info("http to https redirection active.")
   }
 
@@ -94,7 +96,7 @@ process.on("uncaughtException", function(err) {
       break
     case "EADDRINUSE":
       console.error("EADDRINUSE: another service on your machine is using " +
-      "port 443 or port 80.\nStop it or change port with:" +
+      "the current port.\nStop it or change port with:" +
       "`PORT=4433 serve ~/myproj`.")
       break
     default:

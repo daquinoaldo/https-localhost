@@ -96,7 +96,10 @@ describe("Testing certs", function() {
 // TESTS MODULE
 describe("Testing module", () => {
   // close the server after each test
-  afterEach(() => app.server.close())
+  afterEach(() => {
+    app.server.close()
+    delete process.env.PORT
+  })
 
   it("works as express app", function(done) {
     (async() => {
@@ -127,13 +130,17 @@ describe("Testing module", () => {
   })
 })
 
+// TEST SCRIPT
 describe("Testing serve", () => {
   // close the server after each test
-  afterEach(() => app.server.close())
+  afterEach(() => {
+    app.server.close()
+    delete process.env.PORT
+  })
 
   it("serves static files from custom path", function(done) {
     (async() => {
-      // start the server (serving the test folder)
+      // start the server (serving the test folder)port 443 or port 80
       app.serve("test", HTTPS_PORT)
       // make the request and check the output
       await makeRequest("/static.html")
@@ -159,6 +166,8 @@ describe("Testing serve", () => {
 
   it("doesn't crash on 404", function(done) {
     (async() => {
+      // set the environment port
+      process.env.PORT = HTTPS_PORT
       // start the server (serving the default folder)
       app.serve()
       // make the request and check the status code
@@ -186,7 +195,7 @@ describe("Testing serve", () => {
   it("doesn't crash if the static path doesn't exists", function(done) {
     (async() => {
       // start the server (serving a non existing folder)
-      app.serve("does-not-exist")
+      app.serve("does-not-exist", HTTPS_PORT)
       // make the request and check the status code
       await makeRequest("/")
         .then(res => assert(res.statusCode === 404))
@@ -195,19 +204,61 @@ describe("Testing serve", () => {
   })
 })
 
-// OTHER TESTS
-describe("Testing additional features", () => {
+// TEST REDIRECT
+describe("Testing redirect", () => {
+  // close the server after each test
+  afterEach(() => {
+    app.http.close()
+    delete process.env.PORT
+  })
+
   it("redirect http to https", function(done) {
     (async() => {
       // start the redirection
       await app.redirect(HTTP_PORT)
       // make the request and check the status
       await makeRequest("/", false, HTTP_PORT)
-        .then(res => assert(res.statusCode === 301))
+        .then(res => {
+          assert(res.statusCode === 301)
+          assert(res.headers.location === "https://localhost/")
+        })
       done()
     })()
   })
 
+  it("redirect http to https with custom ports", function(done) {
+    (async() => {
+      // start the redirection
+      await app.redirect(HTTP_PORT, HTTPS_PORT)
+      // make the request and check the status
+      await makeRequest("/", false, HTTP_PORT)
+        .then(res => {
+          assert(res.statusCode === 301)
+          assert(res.headers.location === "https://localhost:4443/")
+        })
+      done()
+    })()
+  })
+
+  it("redirect http to https with env port", function(done) {
+    (async() => {
+      // set the environment port
+      process.env.PORT = HTTPS_PORT
+      // start the redirection
+      await app.redirect(HTTP_PORT)
+      // make the request and check the status
+      await makeRequest("/", false, HTTP_PORT)
+        .then(res => {
+          assert(res.statusCode === 301)
+          assert(res.headers.location === "https://localhost:4443/")
+        })
+      done()
+    })()
+  })
+})
+
+// OTHER TESTS
+describe("Testing additional features", () => {
   it("is ready for production", function(done) {
     (async() => {
       // set NODE_ENV to production
