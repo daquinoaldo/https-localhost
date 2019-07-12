@@ -1,6 +1,6 @@
 {
   "name": "https-localhost",
-  "version": "4.1.1",
+  "version": "4.1.2",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
@@ -46,17 +46,17 @@
   "dependencies": {
     "appdata-path": "^1.0.0",
     "compression": "^1.7.4",
-    "express": "^4.17.0",
+    "express": "^4.17.1",
     "express-minify": "^1.0.0",
     "spdy": "^4.0.0"
   },
   "devDependencies": {
-    "coveralls": "^3.0.3",
-    "eslint": "^5.16.0",
-    "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.17.2",
-    "eslint-plugin-node": "^9.0.1",
-    "eslint-plugin-promise": "^4.1.1",
+    "coveralls": "^3.0.5",
+    "eslint": "^6.0.1",
+    "eslint-config-standard": "^13.0.1",
+    "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-node": "^9.1.0",
+    "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.0",
     "mocha": "^6.1.4",
     "nyc": "^14.1.1",
