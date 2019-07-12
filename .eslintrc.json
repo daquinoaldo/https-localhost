@@ -17,6 +17,6 @@
     "max-len": ["error", { "code": 80, "tabWidth": 2 }],
     "quote-props": ["error", "as-needed"],
     "no-console": "off",
-    "process.env": false
+    "process.env": 0
   }
 }
