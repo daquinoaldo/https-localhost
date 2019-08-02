@@ -48,17 +48,17 @@
     "compression": "^1.7.4",
     "express": "^4.17.1",
     "express-minify": "^1.0.0",
-    "spdy": "^4.0.0"
+    "spdy": "^4.0.1"
   },
   "devDependencies": {
     "coveralls": "^3.0.5",
-    "eslint": "^6.0.1",
+    "eslint": "^6.1.0",
     "eslint-config-standard": "^13.0.1",
-    "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^9.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.0",
-    "mocha": "^6.1.4",
+    "mocha": "^6.2.0",
     "nyc": "^14.1.1",
     "pkg": "^4.4.0",
     "sinon": "^7.3.2"
