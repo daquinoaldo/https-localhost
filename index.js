@@ -40,9 +40,13 @@ const createServer = () => {
     /* istanbul ignore next: cannot be tested on Travis */ httpPort = 80,
     httpsPort = process.env.PORT || 443) {
     app.http = http.createServer((req, res) => {
+      const reqHost = req.headers["host"]
+        ? req.headers["host"].replace(":" + httpPort, "")
+        : /* istanbul ignore next: cannot be tested */ "localhost"
       res.writeHead(301, {
-        Location: "https://" + req.headers["host"].replace(":" + httpPort, "") +
-          (httpsPort !== 443 ? ":" + httpsPort : "") + req.url
+        Location: "https://" + reqHost +
+          (httpsPort !== 443 ? ":" + httpsPort : "") + (req.url ||
+        /* istanbul ignore next: cannot be tested */ "")
       })
       res.end()
     }).listen(httpPort)
