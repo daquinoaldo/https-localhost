@@ -10,7 +10,8 @@ const MKCERT_VERSION = "v1.4.0"
 const CERT_PATH = getAppDataPath("https-localhost")
 
 // check for updates
-function checkUpdates() /* istanbul ignore next: cannot test pkg */ {
+/* istanbul ignore next: cannot test pkg */
+function checkUpdates() {
   try {
     const options = {
       host: "api.github.com",
@@ -132,6 +133,7 @@ async function getCerts() {
       cert: fs.readFileSync(path.join(certPath, "localhost.crt"))
     }
   } catch (e) {
+    /* istanbul ignore next: should never occur */
     if (certPath !== CERT_PATH) {
       console.error("Cannot find localhost.key and localhost.crt in the" +
       " specified path: " + certPath)
@@ -171,6 +173,5 @@ if (require.main === module)
 module.exports = {
   getCerts,
   generate,
-  remove,
-  CERT_PATH
+  remove
 }

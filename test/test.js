@@ -1,4 +1,3 @@
-const path = require("path")
 const assert = require("assert")
 const fs = require("fs")
 const http = require("http")
@@ -59,7 +58,7 @@ describe("Testing certs", function() {
     // inner async function
     (async() => {
       // remove certs
-      fs.unlinkSync(path.join(certs.CERT_PATH, "localhost.key"))
+      certs.remove()
       // prepare the server with a mock response
       app.get("/test/module", (req, res) => res.send("TEST"))
       // start the server
