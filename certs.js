@@ -6,8 +6,34 @@ const exec = require("child_process").exec
 const https = require("https")
 const getAppDataPath = require("appdata-path")
 
-const MKCERT_VERSION = "v1.3.0"
+const MKCERT_VERSION = "v1.4.0"
 const CERT_PATH = getAppDataPath("https-localhost")
+
+// check for updates
+function checkUpdates() /* istanbul ignore next: cannot test pkg */ {
+  try {
+    const options = {
+      host: "api.github.com",
+      path: "/repos/daquinoaldo/https-localhost/releases/latest",
+      method: "GET",
+      headers: { "User-Agent": "node.js" }
+    }
+    https.request(options, res => {
+      let body = ""
+      res.on("data", chunk => { body += chunk.toString("utf8") })
+      res.on("end", () => {
+        const currentVersion = JSON.parse(fs.readFileSync(
+          path.resolve(__dirname, "package.json"))).version
+        const latestVersion = JSON.parse(body).tag_name.replace("v", "")
+        if (currentVersion !== latestVersion)
+          console.warn("[https-localhost] New update available.")
+      })
+    }).end()
+  } catch (e) {
+    // Just catch everything, this is not a critic part and can fail.
+    // It is important to not affect the script behavior.
+  }
+}
 
 // get the executable name
 function getExe() {
@@ -71,6 +97,8 @@ function mkcert(appDataPath, exe) {
 
 async function generate(appDataPath = CERT_PATH) {
   console.info("Generating certificates...")
+  console.log("Certificates path: " + appDataPath +
+    ". Never modify nor share this files.")
   // mkdir if not exists
   /* istanbul ignore else: not relevant */
   if (!fs.existsSync(appDataPath))
@@ -91,6 +119,13 @@ async function generate(appDataPath = CERT_PATH) {
 
 async function getCerts() {
   const certPath = process.env.CERT_PATH || CERT_PATH
+  // check for updates if running as executable
+  /* istanbul ignore if: cannot test pkg */
+  if (process.pkg) checkUpdates()
+  // check if a reinstall is forced or needed by a mkcert update
+  if (process.env.REINSTALL ||
+      !fs.existsSync(path.join(certPath, getExe())))
+    await generate(CERT_PATH)
   try {
     return {
       key: fs.readFileSync(path.join(certPath, "localhost.key")),
@@ -136,5 +171,6 @@ if (require.main === module)
 module.exports = {
   getCerts,
   generate,
-  remove
+  remove,
+  CERT_PATH
 }
