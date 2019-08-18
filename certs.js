@@ -126,14 +126,14 @@ async function getCerts() {
   // check if a reinstall is forced or needed by a mkcert update
   if (process.env.REINSTALL ||
       !fs.existsSync(path.join(certPath, getExe())))
-    await generate(CERT_PATH)
+    await generate(certPath)
   try {
     return {
       key: fs.readFileSync(path.join(certPath, "localhost.key")),
       cert: fs.readFileSync(path.join(certPath, "localhost.crt"))
     }
   } catch (e) {
-    /* istanbul ignore next: should never occur */
+    /* istanbul ignore else: should never occur */
     if (certPath !== CERT_PATH) {
       console.error("Cannot find localhost.key and localhost.crt in the" +
       " specified path: " + certPath)
