@@ -98,7 +98,7 @@ Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/mast
 ## Troubleshooting
 ### Node.js version
 https-localhost requires Node.js 8 or higher.  
-<sub>If you need compatibility with previously Node.js versions let me know, I'll try to rearrange the code.</sub>
+<sub>If you need compatibility with previously Node.js versions let me know, we'll try to rearrange the code.</sub>
 
 ### root required
 -  **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ serve ~/myproj`.
@@ -122,6 +122,13 @@ It is a known bug of `spdy` that is present sometimes with some old Node.js vers
 It should be present only with `NODE_ENV=production`, hence the easiest fix is to avoid using the production env. Anyway, if you need the production env, you can try to update Node.js to the latest release, or to the most stable LTS version.
 
 I've tried to reproduce this error without any success (checkout the [Travis build logs](https://travis-ci.org/daquinoaldo/https-localhost)). If you can help please open an issue and describe as better as you can how to reproduce it, I'll be happy to help you.
+
+### ERR_SSL_PROTOCOL_ERROR
+And in general all the cases when the script runs but the connection is marked as untrusted.
+
+Force a reinstall of the certificate with `REINSTALL=true serve`. `sudo` may be required on linux and MacOS.
+
+If the problem is solved you should be able to use https-localhost also as module.
 
 
 ## Contributing
