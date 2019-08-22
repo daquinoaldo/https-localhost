@@ -37,7 +37,7 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
   })
 }
 
-// TEST CERTFICATES
+// TEST CERTIFICATES
 describe("Testing certs", function() {
   // timeout 5 min, since requires the mkcert executable download
   this.timeout(300000)

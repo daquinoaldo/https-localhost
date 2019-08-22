@@ -111,4 +111,4 @@ process.on("uncaughtException", function(err) {
 })
 
 // export as module
-module.exports = createServer
+module.exports = { createServer, getCerts }
