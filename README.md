@@ -13,6 +13,22 @@ It works with MacOS, Linux and Windows, on Chrome and Firefox, and requires you 
 [![GitHub issues](https://img.shields.io/github/issues/daquinoaldo/https-localhost.svg)](https://github.com/daquinoaldo/https-localhost/issues)
 
 
+## Dependencies
+nss/certutils are needed for Firefox and Chrome.
+#### MacOS
+```
+brew install nss
+```
+#### Linux
+```
+sudo apt install libnss3-tools
+    -or-
+sudo yum install nss-tools
+    -or-
+sudo pacman -S nss
+```
+
+
 ## Install and use standalone
 ```
 npm i -g --only=prod https-localhost
