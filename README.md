@@ -16,11 +16,11 @@ It works with MacOS, Linux and Windows, on Chrome and Firefox, and requires you 
 ## Dependencies
 nss/certutils are needed for Firefox and Chrome.
 #### MacOS
-```
+```bash
 brew install nss
 ```
 #### Linux
-```
+```bash
 sudo apt install libnss3-tools
     -or-
 sudo yum install nss-tools
@@ -30,10 +30,10 @@ sudo pacman -S nss
 
 
 ## Install and use standalone
-```
+```bash
 npm i -g --only=prod https-localhost
 ```
-```
+```bash
 serve ~/myproj
 ```
 - `sudo` may be necessary.
@@ -42,7 +42,7 @@ serve ~/myproj
 
 ### Binaries
 If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
-```
+```bash
 # Linux
 ./https-localhost-linux ~/myproj
 
@@ -58,11 +58,11 @@ If you don't have Node.js installed just use a packaged version! Download it fro
 
 ## Use as module
 Install as a dependency:
-```
+```bash
 npm i -s https-localhost
 ```
 Then put in your `index.js` file:
-```
+```javascript
 const httpsLocalhost = require("https-localhost")
 const app = httpsLocalhost()
 // app is an express app, do what you usually do with express
@@ -78,7 +78,7 @@ app.listen(port)
 
 ## Production
 This tool has a production version that activates **HTTP/2**, **compression** and **minify**.
-```
+```bash
 NODE_ENV=production serve ~/myproj
 ``` 
 I decide to not activate it by default since it is usually an unwanted behaviour for localhost testing, but sometimes it could be userful, e.g. to test Progressive Web Application or more ingeneral the website performances.
