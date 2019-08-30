@@ -16,6 +16,9 @@ const createServer = () => {
   // create a server with express
   const app = express()
 
+  // add getCerts to app
+  app.getCerts = getCerts
+
   // override the default express listen method to use our server
   app.listen = async function(port = process.env.PORT ||
   /* istanbul ignore next: cannot be tested on Travis */ 443) {
