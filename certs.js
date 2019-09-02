@@ -103,7 +103,7 @@ async function generate(appDataPath = CERT_PATH) {
   // mkdir if not exists
   /* istanbul ignore else: not relevant */
   if (!fs.existsSync(appDataPath))
-    fs.mkdirSync(appDataPath)
+    fs.mkdirSync(appDataPath, { recursive: true })
   // build the executable url and path
   const url = "https://github.com/FiloSottile/mkcert/releases/download/" +
     MKCERT_VERSION + "/"
