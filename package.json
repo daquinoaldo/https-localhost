@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "coveralls": "^3.0.6",
-    "eslint": "^6.2.2",
+    "eslint": "^6.3.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^9.2.0",
@@ -61,6 +61,6 @@
     "mocha": "^6.2.0",
     "nyc": "^14.1.1",
     "pkg": "^4.4.0",
-    "sinon": "^7.4.1"
+    "sinon": "^7.4.2"
   }
 }
