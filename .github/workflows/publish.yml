@@ -4,6 +4,7 @@ on: release
 
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -14,6 +15,7 @@ jobs:
       - run: npm test
 
   build:
+    name: Build binaries
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -43,6 +45,7 @@ jobs:
           path: build
   
   publish-npm:
+    name: Publish NPM
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -56,6 +59,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
   publish-gpr:
+    name: Publish GitHub Packages
     needs: test
     runs-on: ubuntu-latest
     steps:

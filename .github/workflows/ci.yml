@@ -1,10 +1,11 @@
-name: ci
+name: GitHub CI
 
 on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    name: Test
+    runs-on: ${{matrix.os}}
 
     strategy:
       matrix:
@@ -13,7 +14,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js ${{matrix.node-version}}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
@@ -23,4 +24,23 @@ jobs:
           npm test
         env:
           CI: true
-      
+    
+  coverage:
+    name: Coverage (Coveralls)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: |
+          npm install
+          npm test
+          npm run coveralls
+        env:
+          CI: true
+      - name: Coveralls
+        if: success()
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
