@@ -116,6 +116,16 @@ describe("Testing certs", function() {
       done()
     })()
   })
+
+  it("provides the certificate", function(done) {
+    // inner async function
+    (async() => {
+      const appCerts = await app.getCerts()
+      const realCerts = await certs.getCerts()
+      assert.deepStrictEqual(appCerts, realCerts)
+      done()
+    })()
+  })
 })
 
 // TESTS MODULE
@@ -283,7 +293,10 @@ describe("Testing redirect", () => {
 })
 
 // OTHER TESTS
-describe("Testing additional features", () => {
+describe("Testing additional features", function() {
+  // timeout 10 secs, since sometimes 3 secs are not sufficient
+  this.timeout(10000)
+
   it("is ready for production", function(done) {
     (async() => {
       // set NODE_ENV to production

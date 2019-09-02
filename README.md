@@ -64,8 +64,7 @@ npm i -s https-localhost
 ```
 Then put in your `index.js` file:
 ```javascript
-const httpsLocalhost = require("https-localhost")
-const app = httpsLocalhost()
+const app = require("https-localhost")()
 // app is an express app, do what you usually do with express
 app.listen(port)
 ```
@@ -76,6 +75,14 @@ app.listen(port)
 **Tip:** consider installing it as a dev dependency: this is not a production tool!  
 `npm i --save-dev https-localhost`
 
+#### Use with a web framework different from Express.js
+```javascript
+const httpsLocalhost = require("https-localhost")()
+// const app = ...
+// const port = 443
+const certs = await httpsLocalhost.getCerts()
+const server = https.createServer(certs, app).listen(port)
+```
 
 ## Production
 This tool has a production version that activates **HTTP/2**, **compression** and **minify**.
