@@ -6,7 +6,7 @@
   "scripts": {
     "pretest": "eslint --ignore-path .gitignore .",
     "test": "node node_modules/nyc/bin/nyc.js node_modules/mocha/bin/_mocha --exit",
-    "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=html",
+    "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=lcov",
     "coveralls": "node node_modules/nyc/bin/nyc.js report --reporter=text-lcov | node_modules/coveralls/bin/coveralls.js",
     "preuninstall": "node certs.js -u",
     "build": "pkg --out-path build .",

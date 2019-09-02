@@ -1,0 +1,74 @@
+name: publish
+
+on: release
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: npm ci
+      - run: npm test
+
+  build:
+    name: Build binaries
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      - name: npm run build
+        run: |
+          npm install
+          npm run build
+      - name: upload linux binary
+        uses: actions/upload-artifact@master
+        with:
+          name: https-localhost-linux
+          path: build
+      - name: upload macos binary
+        uses: actions/upload-artifact@master
+        with:
+          name: https-localhost-macos
+          path: build
+      - name: upload windows binary
+        uses: actions/upload-artifact@master
+        with:
+          name: https-localhost-win.exe
+          path: build
+  
+  publish-npm:
+    name: Publish NPM
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+  publish-gpr:
+    name: Publish GitHub Packages
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://npm.pkg.github.com/
+          scope: '@daquinoaldo'
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
