@@ -11,6 +11,7 @@ It works with MacOS, Linux and Windows, on Chrome and Firefox, and requires you 
 [![Dependency Status](https://img.shields.io/david/daquinoaldo/https-localhost.svg)](https://david-dm.org/daquinoaldo/https-localhost)
 [![Known Vulnerabilities](https://snyk.io/test/npm/https-localhost/badge.svg)](https://snyk.io/test/npm/https-localhost)
 [![GitHub issues](https://img.shields.io/github/issues/daquinoaldo/https-localhost.svg)](https://github.com/daquinoaldo/https-localhost/issues)
+[![GitHub Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fdaquinoaldo%2Fhttps-localhost%2Fbadge)](https://actions-badge.atrox.dev/daquinoaldo/https-localhost/goto)
 
 
 ## Dependencies

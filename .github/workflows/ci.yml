@@ -1,0 +1,49 @@
+name: GitHub CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{matrix.os}}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        node: [8, 10, 11, 12]
+        exclude:
+          - os: ubuntu-latest
+            node: 8
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{matrix.node}}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: npm install and test
+        run: |
+          npm install
+          npm test
+        env:
+          CI: true
+    
+  coverage:
+    name: Coverage (Coveralls)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: |
+          npm install
+          npm test
+        env:
+          CI: true
+      - name: Coveralls
+        if: success()
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
