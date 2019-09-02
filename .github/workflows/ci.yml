@@ -10,14 +10,17 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        node-version: [8, 10, 11, 12]
+        node: [8, 10, 11, 12]
+        exclude:
+          - os: ubuntu-latest
+            node: 8
 
     steps:
       - uses: actions/checkout@v1
-      - name: Use Node.js ${{matrix.node-version}}
+      - name: Use Node.js ${{matrix.node}}
         uses: actions/setup-node@v1
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
       - name: npm install and test
         run: |
           npm install
@@ -27,6 +30,7 @@ jobs:
     
   coverage:
     name: Coverage (Coveralls)
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -36,7 +40,6 @@ jobs:
       - run: |
           npm install
           npm test
-          npm run coveralls
         env:
           CI: true
       - name: Coveralls
