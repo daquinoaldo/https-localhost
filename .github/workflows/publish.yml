@@ -13,6 +13,35 @@ jobs:
       - run: npm ci
       - run: npm test
 
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      - name: npm run build
+        run: |
+          npm install
+          npm run build
+      - name: upload linux binary
+        uses: actions/upload-artifact@master
+        with:
+          name: https-localhost-linux
+          path: build
+      - name: upload macos binary
+        uses: actions/upload-artifact@master
+        with:
+          name: https-localhost-macos
+          path: build
+      - name: upload windows binary
+        uses: actions/upload-artifact@master
+        with:
+          name: https-localhost-win.exe
+          path: build
+  
   publish-npm:
     needs: test
     runs-on: ubuntu-latest
