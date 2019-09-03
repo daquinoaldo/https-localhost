@@ -97,7 +97,7 @@ function mkcert(appDataPath, exe, customDomain) {
   })
 }
 
-async function generate(appDataPath, customDomain = "") {
+async function generate(appDataPath = CERT_PATH, customDomain = "") {
   console.info("Generating certificates...")
   console.log("Certificates path: " + appDataPath +
     ". Never modify nor share this files.")
@@ -167,7 +167,7 @@ if (require.main === module)
     remove()
     console.info("Certificates removed.")
   } else try { // install
-    generate(CERT_PATH)
+    generate()
   } catch (err) { console.error("\nExec error: " + err) }
 
 // export as module
