@@ -22,7 +22,8 @@ const createServer = (customDomain = "") => {
   // override the default express listen method to use our server
   app.listen = async function(port = process.env.PORT ||
   /* istanbul ignore next: cannot be tested on Travis */ 443) {
-    app.server = https.createServer(await getCerts(customDomain), app).listen(port)
+    app.server = https.createServer(await getCerts(customDomain), app)
+      .listen(port)
     console.info("Server running on port " + port + ".")
     return app.server
   }
