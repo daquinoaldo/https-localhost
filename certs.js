@@ -69,7 +69,7 @@ function download(url, path) {
 }
 
 // execute the binary executable to generate the certificates
-function mkcert(appDataPath, exe) {
+function mkcert(appDataPath, exe, customDomain) {
   const logPath = path.join(appDataPath, "mkcert.log")
   const errPath = path.join(appDataPath, "mkcert.err")
   // escape spaces in appDataPath (Mac OS)
@@ -78,7 +78,8 @@ function mkcert(appDataPath, exe) {
   const crtPath = path.join(appDataPath, "localhost.crt")
   const keyPath = path.join(appDataPath, "localhost.key")
   const cmd = exePath + " -install -cert-file " + crtPath +
-    " -key-file " + keyPath + " localhost"
+    " -key-file " + keyPath + " localhost " + customDomain
+  console.log(cmd)
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
     exec(cmd, (err, stdout, stderr) => {
@@ -96,7 +97,7 @@ function mkcert(appDataPath, exe) {
   })
 }
 
-async function generate(appDataPath = CERT_PATH) {
+async function generate(appDataPath, customDomain = "") {
   console.info("Generating certificates...")
   console.log("Certificates path: " + appDataPath +
     ". Never modify nor share this files.")
@@ -114,11 +115,11 @@ async function generate(appDataPath = CERT_PATH) {
   // make binary executable
   fs.chmodSync(exePath, "0755")
   // execute the binary
-  await mkcert(appDataPath, exe)
+  await mkcert(appDataPath, exe, customDomain)
   console.log("Certificates generated, installed and trusted. Ready to go!")
 }
 
-async function getCerts() {
+async function getCerts(customDomain) {
   const certPath = process.env.CERT_PATH || CERT_PATH
   // check for updates if running as executable
   /* istanbul ignore if: cannot test pkg */
@@ -126,7 +127,7 @@ async function getCerts() {
   // check if a reinstall is forced or needed by a mkcert update
   if (process.env.REINSTALL ||
       !fs.existsSync(path.join(certPath, getExe())))
-    await generate(certPath)
+    await generate(certPath, customDomain)
   try {
     return {
       key: fs.readFileSync(path.join(certPath, "localhost.key")),
@@ -141,7 +142,7 @@ async function getCerts() {
     } else {
       // Missing certificates (first run)
       // generate the certificate
-      await generate(CERT_PATH)
+      await generate(CERT_PATH, customDomain)
       // recursive call
       return getCerts()
     }
@@ -166,7 +167,7 @@ if (require.main === module)
     remove()
     console.info("Certificates removed.")
   } else try { // install
-    generate()
+    generate(CERT_PATH)
   } catch (err) { console.error("\nExec error: " + err) }
 
 // export as module
