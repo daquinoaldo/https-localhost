@@ -119,7 +119,8 @@ async function generate(appDataPath = CERT_PATH, customDomain = undefined) {
   console.log("Certificates generated, installed and trusted. Ready to go!")
 }
 
-async function getCerts(customDomain) {
+async function getCerts(customDomain = undefined) {
+  const domain = customDomain || "localhost"
   const certPath = process.env.CERT_PATH || CERT_PATH
   // check for updates if running as executable
   /* istanbul ignore if: cannot test pkg */
@@ -127,11 +128,11 @@ async function getCerts(customDomain) {
   // check if a reinstall is forced or needed by a mkcert update
   if (process.env.REINSTALL ||
       !fs.existsSync(path.join(certPath, getExe())))
-    await generate(certPath, customDomain)
+    await generate(certPath, domain)
   try {
     return {
-      key: fs.readFileSync(path.join(certPath, "localhost.key")),
-      cert: fs.readFileSync(path.join(certPath, "localhost.crt"))
+      key: fs.readFileSync(path.join(certPath, domain + ".key")),
+      cert: fs.readFileSync(path.join(certPath, domain + ".crt"))
     }
   } catch (e) {
     /* istanbul ignore else: should never occur */
@@ -142,9 +143,9 @@ async function getCerts(customDomain) {
     } else {
       // Missing certificates (first run)
       // generate the certificate
-      await generate(CERT_PATH, customDomain)
+      await generate(CERT_PATH, domain)
       // recursive call
-      return getCerts(customDomain)
+      return getCerts(domain)
     }
   }
 }
