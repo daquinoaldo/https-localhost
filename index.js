@@ -12,7 +12,7 @@ const getCerts = require(path.resolve(__dirname, "certs.js")).getCerts
 /* CONFIGURE THE SERVER */
 
 // SSL certificate
-const createServer = (customDomain = "") => {
+const createServer = (domain = "localhost") => {
   // create a server with express
   const app = express()
 
@@ -22,7 +22,7 @@ const createServer = (customDomain = "") => {
   // override the default express listen method to use our server
   app.listen = async function(port = process.env.PORT ||
   /* istanbul ignore next: cannot be tested on Travis */ 443) {
-    app.server = https.createServer(await getCerts(customDomain), app)
+    app.server = https.createServer(await getCerts(domain), app)
       .listen(port)
     console.info("Server running on port " + port + ".")
     return app.server

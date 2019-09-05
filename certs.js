@@ -69,17 +69,16 @@ function download(url, path) {
 }
 
 // execute the binary executable to generate the certificates
-function mkcert(appDataPath, exe, customDomain) {
+function mkcert(appDataPath, exe, domain) {
   const logPath = path.join(appDataPath, "mkcert.log")
   const errPath = path.join(appDataPath, "mkcert.err")
   // escape spaces in appDataPath (Mac OS)
   appDataPath = appDataPath.replace(" ", "\\ ")
   const exePath = path.join(appDataPath, exe)
-  const crtPath = path.join(appDataPath, "localhost.crt")
-  const keyPath = path.join(appDataPath, "localhost.key")
+  const crtPath = path.join(appDataPath, domain + ".crt")
+  const keyPath = path.join(appDataPath, domain + ".key")
   const cmd = exePath + " -install -cert-file " + crtPath +
-    " -key-file " + keyPath + " localhost " + customDomain
-  console.log(cmd)
+    " -key-file " + keyPath + " " + domain
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
     exec(cmd, (err, stdout, stderr) => {
@@ -97,7 +96,8 @@ function mkcert(appDataPath, exe, customDomain) {
   })
 }
 
-async function generate(appDataPath = CERT_PATH, customDomain = "") {
+async function generate(appDataPath = CERT_PATH, customDomain = undefined) {
+  const domain = customDomain || "localhost"
   console.info("Generating certificates...")
   console.log("Certificates path: " + appDataPath +
     ". Never modify nor share this files.")
@@ -115,7 +115,7 @@ async function generate(appDataPath = CERT_PATH, customDomain = "") {
   // make binary executable
   fs.chmodSync(exePath, "0755")
   // execute the binary
-  await mkcert(appDataPath, exe, customDomain)
+  await mkcert(appDataPath, exe, domain)
   console.log("Certificates generated, installed and trusted. Ready to go!")
 }
 
@@ -144,7 +144,7 @@ async function getCerts(customDomain) {
       // generate the certificate
       await generate(CERT_PATH, customDomain)
       // recursive call
-      return getCerts()
+      return getCerts(customDomain)
     }
   }
 }
