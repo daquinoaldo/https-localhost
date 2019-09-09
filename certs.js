@@ -69,16 +69,16 @@ function download(url, path) {
 }
 
 // execute the binary executable to generate the certificates
-function mkcert(appDataPath, exe) {
+function mkcert(appDataPath, exe, domain) {
   const logPath = path.join(appDataPath, "mkcert.log")
   const errPath = path.join(appDataPath, "mkcert.err")
   // escape spaces in appDataPath (Mac OS)
   appDataPath = appDataPath.replace(" ", "\\ ")
   const exePath = path.join(appDataPath, exe)
-  const crtPath = path.join(appDataPath, "localhost.crt")
-  const keyPath = path.join(appDataPath, "localhost.key")
+  const crtPath = path.join(appDataPath, domain + ".crt")
+  const keyPath = path.join(appDataPath, domain + ".key")
   const cmd = exePath + " -install -cert-file " + crtPath +
-    " -key-file " + keyPath + " localhost"
+    " -key-file " + keyPath + " " + domain
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
     exec(cmd, (err, stdout, stderr) => {
@@ -96,7 +96,8 @@ function mkcert(appDataPath, exe) {
   })
 }
 
-async function generate(appDataPath = CERT_PATH) {
+async function generate(appDataPath = CERT_PATH, customDomain = undefined) {
+  const domain = customDomain || "localhost"
   console.info("Generating certificates...")
   console.log("Certificates path: " + appDataPath +
     ". Never modify nor share this files.")
@@ -114,11 +115,12 @@ async function generate(appDataPath = CERT_PATH) {
   // make binary executable
   fs.chmodSync(exePath, "0755")
   // execute the binary
-  await mkcert(appDataPath, exe)
+  await mkcert(appDataPath, exe, domain)
   console.log("Certificates generated, installed and trusted. Ready to go!")
 }
 
-async function getCerts() {
+async function getCerts(customDomain = undefined) {
+  const domain = customDomain || "localhost"
   const certPath = process.env.CERT_PATH || CERT_PATH
   // check for updates if running as executable
   /* istanbul ignore if: cannot test pkg */
@@ -126,11 +128,11 @@ async function getCerts() {
   // check if a reinstall is forced or needed by a mkcert update
   if (process.env.REINSTALL ||
       !fs.existsSync(path.join(certPath, getExe())))
-    await generate(certPath)
+    await generate(certPath, domain)
   try {
     return {
-      key: fs.readFileSync(path.join(certPath, "localhost.key")),
-      cert: fs.readFileSync(path.join(certPath, "localhost.crt"))
+      key: fs.readFileSync(path.join(certPath, domain + ".key")),
+      cert: fs.readFileSync(path.join(certPath, domain + ".crt"))
     }
   } catch (e) {
     /* istanbul ignore else: should never occur */
@@ -141,9 +143,9 @@ async function getCerts() {
     } else {
       // Missing certificates (first run)
       // generate the certificate
-      await generate(CERT_PATH)
+      await generate(CERT_PATH, domain)
       // recursive call
-      return getCerts()
+      return getCerts(domain)
     }
   }
 }

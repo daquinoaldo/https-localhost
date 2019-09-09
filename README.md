@@ -71,6 +71,7 @@ app.listen(port)
 - If the **port** number is not provided, it will listen on 443.
 - To **redirect** the http traffic to https use `app.redirect()`.
 - You can serve **static files** with `app.serve(path)`.
+- You can create a certificate for additional domains with `require("https-localhost")("mydomain.com")`
 
 **Tip:** consider installing it as a dev dependency: this is not a production tool!  
 `npm i --save-dev https-localhost`
