@@ -60,9 +60,17 @@ const createServer = (domain = "localhost") => {
   // serve static content, usage `app.serve([path])`
   app.serve = function(staticPath = process.cwd(), port = process.env.PORT ||
   /* istanbul ignore next: cannot be tested on Travis */ 443) {
-    app.use(express.static(staticPath))
+    //app.use(express.static(staticPath))
     // redirect 404 to 404.html or to index.html
     app.use((req, res) => {
+		/*TO get static file natively in nodeJS*/
+		fs.readFile(staticPath + "/" + req.url, function (err,data) {
+		if (err) {
+		  res.writeHead(404);
+		  res.end(JSON.stringify(err));
+		  return;
+		}
+		
       if (!staticPath.startsWith("/"))
         staticPath = process.cwd() + "/" + staticPath
       const p404 = staticPath + "/404.html"
@@ -74,6 +82,7 @@ const createServer = (domain = "localhost") => {
         res.status(404).sendFile(index)
       else res.status(404).send(req.path + " not found.")
     })
+	})
     console.info("Serving static path: " + staticPath)
     app.listen(port)
   }
