@@ -75,15 +75,21 @@ const createServer = (domain = "localhost") => {
             res.status(404).sendFile(index)
           else res.status(404).send(req.path + " not found.")
         } else { // no error, serve the file
-          /* TODO: set the headers. Some examples:
+        /* TODO: set the headers. Some examples:
             - Content-Length
             - Content-Type
             - Content-Encoding
             - Expires
             - Last-Modified
           */
+          res.setHeader("content-length", Buffer.byteLength(data, "utf-8"))
+          res.setHeader("content-type", "text/html")
+          res.setHeader("Cache-Control", "public, max-age=345600") // 4 days
+          res.setHeader("Expires", new Date(Date.now() + 3456000).toUTCString())
+          res.setHeader("Last-Modified", new Date())
           // TODO: the data must be streamed
-          res.status(200).send(data)
+          res.pipe(data)
+          res.status(200)
         }
       })
     })
