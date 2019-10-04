@@ -88,7 +88,7 @@ const createServer = (domain = "localhost") => {
           res.setHeader("Expires", new Date(Date.now() + 3456000).toUTCString())
           res.setHeader("Last-Modified", new Date())
           // TODO: the data must be streamed
-          res.pipe(data)
+          res.send(data.toString())
           res.status(200)
         }
       })
