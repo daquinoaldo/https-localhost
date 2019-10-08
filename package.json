@@ -1,6 +1,6 @@
 {
   "name": "https-localhost",
-  "version": "4.4.0",
+  "version": "5.0.0",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "start": "node index.js"
   },
   "bin": {
-    "serve": "index.js"
+    "sserve": "index.js"
   },
   "pkg": {
     "scripts": "*.js",
