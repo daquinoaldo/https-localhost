@@ -70,13 +70,24 @@ function download(url, path) {
 
 // execute the binary executable to generate the certificates
 function mkcert(appDataPath, exe, domain) {
-  const logPath = path.join(appDataPath, "mkcert.log")
-  const errPath = path.join(appDataPath, "mkcert.err")
-  // escape spaces in appDataPath (Mac OS)
-  appDataPath = appDataPath.replace(" ", "\\ ")
-  const exePath = path.join(appDataPath, exe)
-  const crtPath = path.join(appDataPath, domain + ".crt")
-  const keyPath = path.join(appDataPath, domain + ".key")
+  // fix problems with spaces
+  /* istanbul ignore next: platform dependent */
+  const ensureValidPath = function(path) {
+    // use apex on Windows
+    if (process.platform === "win32")
+      return "\"" + path + "\""
+    // escape spaces in Mac OS
+    if (process.platform === "darwin")
+      return path.replace(/ /g, "\\ ")
+    return path
+  }
+
+  const logPath = ensureValidPath(path.join(appDataPath, "mkcert.log"))
+  const errPath = ensureValidPath(path.join(appDataPath, "mkcert.err"))
+  const exePath = ensureValidPath(path.join(appDataPath, exe))
+  const crtPath = ensureValidPath(path.join(appDataPath, domain + ".crt"))
+  const keyPath = ensureValidPath(path.join(appDataPath, domain + ".key"))
+
   const cmd = exePath + " -install -cert-file " + crtPath +
     " -key-file " + keyPath + " " + domain
   return new Promise((resolve, reject) => {
