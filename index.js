@@ -58,9 +58,15 @@ const createServer = (domain = "localhost") => {
   }
 
   // serve static content, usage `app.serve([path])`
-  app.serve = function(staticPath = process.cwd(), port = process.env.PORT ||
+  app.serve = function(staticPath = process.cwd(), spa = false, port = process.env.PORT ||
   /* istanbul ignore next: cannot be tested on Travis */ 443) {
     app.use(express.static(staticPath))
+	
+	  // if a spa, always redirect to index.html
+	  if (spa) {
+      app.get('*', function(req, res) {res.sendFile('index.html', { root: staticPath })});
+	  }
+	
     // redirect 404 to 404.html or to index.html
     app.use((req, res) => {
       if (!staticPath.startsWith("/"))
@@ -87,9 +93,17 @@ const createServer = (domain = "localhost") => {
 // istanbul ignore if: cannot be tested
 if (require.main === module) {
   const app = createServer()
+  
+  // check spa arg
+  let spa = false;
+  if (process.argv.indexOf('--spa') >= 0) {
+	spa = true
+	process.argv.pop('--spa')
+  }
+  
   // retrieve the static path from the process argv or use the cwd
   // 1st is node, 2nd is serve or index.js, 3rd (if exists) is the path
-  app.serve(process.argv.length === 3 ? process.argv[2] : process.cwd())
+  app.serve(process.argv.length === 3 ? process.argv[2] : process.cwd(), spa)
   // redirect http to https (only if https port is the default one)
   if (!process.env.PORT) app.redirect()
 }
