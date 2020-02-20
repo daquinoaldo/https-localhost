@@ -6,7 +6,7 @@ const exec = require("child_process").exec
 const https = require("https")
 const getAppDataPath = require("appdata-path")
 
-const MKCERT_VERSION = "v1.4.0"
+const MKCERT_VERSION = "v1.4.1"
 const CERT_PATH = getAppDataPath("https-localhost")
 
 // check for updates
