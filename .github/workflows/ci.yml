@@ -5,12 +5,12 @@ on: [push, pull_request]
 jobs:
   test:
     name: Test
-    runs-on: ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        node: [8, 10, 11, 12]
+        os: [ubuntu-latest, macOS-latest]
+        node: [10, 12, 13]
         exclude:
           - os: ubuntu-latest
             node: 8

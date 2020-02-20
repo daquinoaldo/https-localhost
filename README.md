@@ -122,8 +122,8 @@ Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/mast
 
 ## Troubleshooting
 ### Node.js version
-https-localhost requires Node.js 8 or higher.  
-<sub>If you need compatibility with previously Node.js versions let me know, we'll try to rearrange the code.</sub>
+https-localhost is compatible with the LTS and latest version of Node.js.  
+<sub>If you need compatibility with other Node.js versions let me know, we'll try to rearrange the code.</sub>
 
 ### root required
 -  **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ serve ~/myproj`.
