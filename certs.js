@@ -43,7 +43,11 @@ function getExe() {
     case "darwin":
       return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
     case "linux":
-      return "mkcert-" + MKCERT_VERSION + "-linux-amd64"
+      if (process.arch === "arm")
+        return "mkcert-" + MKCERT_VERSION + "-linux-arm"
+      if (process.arch === "x64")
+        return "mkcert-" + MKCERT_VERSION + "-linux-amd64"
+      /* falls through */
     case "win32":
       return "mkcert-" + MKCERT_VERSION + "-windows-amd64.exe"
     default:
