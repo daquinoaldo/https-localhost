@@ -69,7 +69,7 @@ const createServer = (domain = "localhost") => {
       if (fs.existsSync(p404))
         res.status(404).sendFile(path.resolve(p404))
       else if (fs.existsSync(index))
-        res.status(404).sendFile(path.resolve(index))
+        res.status(200).sendFile(path.resolve(index))
       else res.status(404).send(req.path + " not found.")
     })
     console.info("Serving static path: " + staticPath)
