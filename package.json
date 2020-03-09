@@ -1,6 +1,6 @@
 {
   "name": "https-localhost",
-  "version": "4.5.0",
+  "version": "4.5.1",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
@@ -58,9 +58,9 @@
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "mocha": "^7.0.1",
+    "mocha": "^7.1.0",
     "nyc": "^15.0.0",
-    "pkg": "^4.4.3",
+    "pkg": "^4.4.4",
     "sinon": "^9.0.0"
   }
 }
