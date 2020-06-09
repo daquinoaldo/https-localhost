@@ -199,6 +199,20 @@ describe("Testing serve", () => {
     })()
   })
 
+  it("includes access-control-allow-origin header", function(done) {
+    (async() => {
+      // set the environment port
+      process.env.PORT = HTTPS_PORT
+      // start the server (serving the default folder)
+      app.serve("test")
+      // make the request and check the output
+      await makeRequest("/static.html")
+        .then(res => assert(res.headers["access-control-allow-origin"] ===
+          "*"))
+      done()
+    })()
+  })
+
   it("doesn't crash on 404", function(done) {
     (async() => {
       // set the environment port
