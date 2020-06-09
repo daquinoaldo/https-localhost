@@ -7,6 +7,7 @@ const http = require("http")
 const https = process.env.NODE_ENV === "production"
   ? require("spdy") : require("https")
 const express = require("express")
+const cors = require("cors")
 const getCerts = require(path.resolve(__dirname, "certs.js")).getCerts
 
 /* CONFIGURE THE SERVER */
@@ -15,6 +16,9 @@ const getCerts = require(path.resolve(__dirname, "certs.js")).getCerts
 const createServer = (domain = "localhost") => {
   // create a server with express
   const app = express()
+
+  // add CORS headers to all responses
+  app.use(cors())
 
   // add getCerts to app
   app.getCerts = getCerts
