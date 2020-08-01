@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upgrade:
+        description: Type of version upgrade (patch, minor, major)
+        required: true
+        default: patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+
+      - name: Setup git
+        run: |-
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        
+      - run: npm version ${{ github.event.inputs.upgrade }}
+
+      - run: git push
+      - run: git push --tags
+
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Prepare build
+        run: npm i -g pkg
+
+      - name: Build
+        run: pkg --out-path build .
+
+      - name: Get version and package name
+        id: get_info
+        run: |-
+          version=$(node -p "require('./package.json').version")
+          echo $version
+          echo "::set-output name=version::$version"
+          name=$(node -p "require('./package.json').name")
+          echo $name
+          echo "::set-output name=name::$name"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_info.outputs.version }}
+          release_name: Release v${{ steps.get_info.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/${{ steps.get_info.outputs.name }}-linux
+          asset_name: ${{ steps.get_info.outputs.name }}-linux
+          asset_content_type: application/x-executable
+      
+      - name: Upload MacOS Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/${{ steps.get_info.outputs.name }}-macos
+          asset_name: ${{ steps.get_info.outputs.name }}-macos
+          asset_content_type: application/x-mach-binary
+      
+      - name: Upload Windows Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/${{ steps.get_info.outputs.name }}-win.exe
+          asset_name: ${{ steps.get_info.outputs.name }}-win.exe
+          asset_content_type: application/x-dosexec

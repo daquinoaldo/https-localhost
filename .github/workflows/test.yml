@@ -1,4 +1,4 @@
-name: GitHub CI
+name: Test
 
 on: [push, pull_request]
 
@@ -16,7 +16,7 @@ jobs:
             node: 8
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Use Node.js ${{matrix.node}}
         uses: actions/setup-node@v1
         with:
@@ -33,7 +33,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 12
