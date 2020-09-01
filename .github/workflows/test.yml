@@ -10,10 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        node: [10, 12, 13]
-        exclude:
-          - os: ubuntu-latest
-            node: 8
+        node: [10, 12, 14]
 
     steps:
       - uses: actions/checkout@v2
