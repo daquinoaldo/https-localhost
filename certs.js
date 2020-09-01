@@ -79,17 +79,18 @@ function mkcert(appDataPath, exe, domain) {
     // use apex on Windows
     if (process.platform === "win32")
       return "\"" + path + "\""
-    // escape spaces (not already escaped) in Mac OS
-    if (process.platform === "darwin")
+    // escape spaces (not already escaped)
+    if (process.platform === "darwin" || process.platform === "linux")
       return path.replace(/(?<!\\) /g, "\\ ")
     return path
   }
 
-  const logPath = path.join(appDataPath, "mkcert.log")  // do not escape: fs.writeFile doesn't want an escaped path
-  const errPath = path.join(appDataPath, "mkcert.err")  // do not escape: fs.writeFile doesn't want an escaped path
   const exePath = ensureValidPath(path.join(appDataPath, exe))
   const crtPath = ensureValidPath(path.join(appDataPath, domain + ".crt"))
   const keyPath = ensureValidPath(path.join(appDataPath, domain + ".key"))
+  // do not escape: fs.writeFile doesn't want an escaped path
+  const logPath = path.join(appDataPath, "mkcert.log")
+  const errPath = path.join(appDataPath, "mkcert.err")
 
   const cmd = exePath + " -install -cert-file " + crtPath +
     " -key-file " + keyPath + " " + domain
