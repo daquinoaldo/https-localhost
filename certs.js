@@ -46,7 +46,7 @@ function getExe() {
       if (process.arch === "arm" || process.arch === "arm64")
         return "mkcert-" + MKCERT_VERSION + "-linux-arm"
       else return "mkcert-" + MKCERT_VERSION + "-linux-amd64"
-      /* falls through */
+    /* falls through */
     case "win32":
       return "mkcert-" + MKCERT_VERSION + "-windows-amd64.exe"
     default:
@@ -72,7 +72,7 @@ function download(url, path) {
 }
 
 // execute the binary executable to generate the certificates
-function mkcert(appDataPath, exe, domain) {
+async function mkcert(appDataPath, exe, domain) {
   // fix problems with spaces
   /* istanbul ignore next: platform dependent */
   const ensureValidPath = function(path) {
@@ -91,11 +91,17 @@ function mkcert(appDataPath, exe, domain) {
   // do not escape: fs.writeFile doesn't want an escaped path
   const logPath = path.join(appDataPath, "mkcert.log")
   const errPath = path.join(appDataPath, "mkcert.err")
-
   const cmd = exePath + " -install -cert-file " + crtPath +
     " -key-file " + keyPath + " " + domain
+
+  // sleep on windows due to issue #28
+  /* istanbul ignore if: cannot be tested */
+  if (process.platform === "win32")
+    await new Promise(resolve => setTimeout(resolve, 3000))
+
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
+    // run the mkcert command
     exec(cmd, (err, stdout, stderr) => {
       // log
       const errFun = err => {
@@ -142,7 +148,7 @@ async function getCerts(customDomain = undefined) {
   if (process.pkg) checkUpdates()
   // check if a reinstall is forced or needed by a mkcert update
   if (process.env.REINSTALL ||
-      !fs.existsSync(path.join(certPath, getExe())))
+    !fs.existsSync(path.join(certPath, getExe())))
     await generate(certPath, domain)
   try {
     return {
@@ -153,7 +159,7 @@ async function getCerts(customDomain = undefined) {
     /* istanbul ignore else: should never occur */
     if (certPath !== CERT_PATH) {
       console.error("Cannot find localhost.key and localhost.crt in the" +
-      " specified path: " + certPath)
+        " specified path: " + certPath)
       process.exit(1)
     } else {
       // Missing certificates (first run)
