@@ -75,24 +75,21 @@ function download(url, path) {
 async function mkcert(appDataPath, exe, domain) {
   // fix problems with spaces
   /* istanbul ignore next: platform dependent */
-  const ensureValidPath = function(path) {
-    // use apex on Windows
-    if (process.platform === "win32")
-      return "\"" + path + "\""
+  const escapeSpaces = function(path) {
     // escape spaces (not already escaped)
     if (process.platform === "darwin" || process.platform === "linux")
       return path.replace(/(?<!\\) /g, "\\ ")
+    // use apex on Windows
+    if (process.platform === "win32")
+      return "\"" + path + "\""
     return path
   }
 
-  const exePath = ensureValidPath(path.join(appDataPath, exe))
-  const crtPath = ensureValidPath(path.join(appDataPath, domain + ".crt"))
-  const keyPath = ensureValidPath(path.join(appDataPath, domain + ".key"))
-  // do not escape: fs.writeFile doesn't want an escaped path
-  const logPath = path.join(appDataPath, "mkcert.log")
-  const errPath = path.join(appDataPath, "mkcert.err")
-  const cmd = exePath + " -install -cert-file " + crtPath +
-    " -key-file " + keyPath + " " + domain
+  const exePath = escapeSpaces(path.join(appDataPath, exe))
+  const crtPath = escapeSpaces(path.join(appDataPath, domain + ".crt"))
+  const keyPath = escapeSpaces(path.join(appDataPath, domain + ".key"))
+  const cmd = `${exePath} -install -cert-file ${crtPath}` +
+    ` -key-file ${keyPath} ${domain}`
 
   // sleep on windows due to issue #28
   /* istanbul ignore if: cannot be tested */
@@ -103,15 +100,15 @@ async function mkcert(appDataPath, exe, domain) {
     console.log("Running mkcert to generate certificates...")
     // run the mkcert command
     exec(cmd, (err, stdout, stderr) => {
-      // log
-      const errFun = err => {
-        /* istanbul ignore if: cannot be tested */
-        if (err) console.error(err)
-      }
-      fs.writeFile(logPath, stdout, errFun)
-      fs.writeFile(errPath, stderr, errFun)
       /* istanbul ignore if: cannot be tested */
-      if (err) reject(err)
+      if (stdout) console.log(stdout)
+      /* istanbul ignore next: cannot be tested */
+      if (stderr) console.error(stderr)
+      /* istanbul ignore if: cannot be tested */
+      if (err) {
+        console.error(err)
+        reject(err)
+      }
       resolve()
     })
   })
