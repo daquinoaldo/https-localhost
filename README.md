@@ -1,4 +1,8 @@
 # HTTPS server running on localhost
+
+| I'm looking for maintainers and contributors! [Learn more](Looking-for-contributor.md). |
+|-----------------------------------------------------------------------------------------|
+
 Run an express server on localhost with HTTP2 and SSL. Serve static files or import as module in your project.
 
 https-localhost is a lightweight tool for serving static content on SSL thanks to locally-trusted development certificates.  
