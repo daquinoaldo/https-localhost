@@ -46,7 +46,7 @@ function getExe() {
       if (process.arch === "arm" || process.arch === "arm64")
         return "mkcert-" + MKCERT_VERSION + "-linux-arm"
       else return "mkcert-" + MKCERT_VERSION + "-linux-amd64"
-      /* falls through */
+    /* falls through */
     case "win32":
       return "mkcert-" + MKCERT_VERSION + "-windows-amd64.exe"
     default:
@@ -72,39 +72,43 @@ function download(url, path) {
 }
 
 // execute the binary executable to generate the certificates
-function mkcert(appDataPath, exe, domain) {
+async function mkcert(appDataPath, exe, domain) {
   // fix problems with spaces
   /* istanbul ignore next: platform dependent */
-  const ensureValidPath = function(path) {
+  const escapeSpaces = function(path) {
+    // escape spaces (not already escaped)
+    if (process.platform === "darwin" || process.platform === "linux")
+      return path.replace(/(?<!\\) /g, "\\ ")
     // use apex on Windows
     if (process.platform === "win32")
       return "\"" + path + "\""
-    // escape spaces in Mac OS
-    if (process.platform === "darwin")
-      return path.replace(/ /g, "\\ ")
     return path
   }
 
-  const logPath = ensureValidPath(path.join(appDataPath, "mkcert.log"))
-  const errPath = ensureValidPath(path.join(appDataPath, "mkcert.err"))
-  const exePath = ensureValidPath(path.join(appDataPath, exe))
-  const crtPath = ensureValidPath(path.join(appDataPath, domain + ".crt"))
-  const keyPath = ensureValidPath(path.join(appDataPath, domain + ".key"))
+  const exePath = escapeSpaces(path.join(appDataPath, exe))
+  const crtPath = escapeSpaces(path.join(appDataPath, domain + ".crt"))
+  const keyPath = escapeSpaces(path.join(appDataPath, domain + ".key"))
+  const cmd = `${exePath} -install -cert-file ${crtPath}` +
+    ` -key-file ${keyPath} ${domain}`
 
-  const cmd = exePath + " -install -cert-file " + crtPath +
-    " -key-file " + keyPath + " " + domain
+  // sleep on windows due to issue #28
+  /* istanbul ignore if: cannot be tested */
+  if (process.platform === "win32")
+    await new Promise(resolve => setTimeout(resolve, 3000))
+
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
+    // run the mkcert command
     exec(cmd, (err, stdout, stderr) => {
-      // log
-      const errFun = err => {
-        /* istanbul ignore if: cannot be tested */
-        if (err) console.error(err)
-      }
-      fs.writeFile(logPath, stdout, errFun)
-      fs.writeFile(errPath, stderr, errFun)
       /* istanbul ignore if: cannot be tested */
-      if (err) reject(err)
+      if (stdout) console.log(stdout)
+      /* istanbul ignore next: cannot be tested */
+      if (stderr) console.error(stderr)
+      /* istanbul ignore if: cannot be tested */
+      if (err) {
+        console.error(err)
+        reject(err)
+      }
       resolve()
     })
   })
@@ -141,7 +145,7 @@ async function getCerts(customDomain = undefined) {
   if (process.pkg) checkUpdates()
   // check if a reinstall is forced or needed by a mkcert update
   if (process.env.REINSTALL ||
-      !fs.existsSync(path.join(certPath, getExe())))
+    !fs.existsSync(path.join(certPath, getExe())))
     await generate(certPath, domain)
   try {
     return {
@@ -152,7 +156,7 @@ async function getCerts(customDomain = undefined) {
     /* istanbul ignore else: should never occur */
     if (certPath !== CERT_PATH) {
       console.error("Cannot find localhost.key and localhost.crt in the" +
-      " specified path: " + certPath)
+        " specified path: " + certPath)
       process.exit(1)
     } else {
       // Missing certificates (first run)

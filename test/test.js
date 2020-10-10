@@ -117,6 +117,28 @@ describe("Testing certs", function() {
     })()
   })
 
+  it("support path with spaces", function(done) {
+    // inner async function
+    (async() => {
+      // set a custom cert path
+      process.env.CERT_PATH = "test/custom folder"
+      // prepare the server with a mock response
+      app.get("/test/module", (req, res) => res.send("TEST"))
+      // start the server
+      await app.listen(HTTPS_PORT)
+      // make the request and check the output
+      await makeRequest("/test/module")
+        .then(res => assert(res.data === "TEST"))
+      // close the server
+      app.server.close()
+      // delete the custom folder
+      certs.remove(process.env.CERT_PATH)
+      // restore the CERT_PATH to undefined
+      delete process.env.CERT_PATH
+      done()
+    })()
+  })
+
   it("provides the certificate", function(done) {
     // inner async function
     (async() => {
