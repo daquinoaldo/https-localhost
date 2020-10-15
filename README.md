@@ -1,4 +1,8 @@
 # HTTPS server running on localhost
+
+| I'm looking for maintainers and contributors! [Learn more](Looking-for-contributor.md). |
+|-----------------------------------------------------------------------------------------|
+
 Run an express server on localhost with HTTP2 and SSL. Serve static files or import as module in your project.
 
 https-localhost is a lightweight tool for serving static content on SSL thanks to locally-trusted development certificates.  
@@ -6,12 +10,11 @@ It works with MacOS, Linux and Windows, on Chrome and Firefox, and requires you 
 
 [![NPM](https://nodei.co/npm/https-localhost.png)](https://nodei.co/npm/https-localhost/)
 
-[![Build Status](https://travis-ci.com/daquinoaldo/https-localhost.svg?branch=master)](https://travis-ci.com/daquinoaldo/https-localhost)
+[![Test](https://github.com/daquinoaldo/https-localhost/workflows/Test/badge.svg)](https://github.com/daquinoaldo/https-localhost/actions?query=workflow:Test)
 [![Coverage Status](https://coveralls.io/repos/github/daquinoaldo/https-localhost/badge.svg?branch=master)](https://coveralls.io/github/daquinoaldo/https-localhost?branch=master)
 [![Dependency Status](https://img.shields.io/david/daquinoaldo/https-localhost.svg)](https://david-dm.org/daquinoaldo/https-localhost)
 [![Known Vulnerabilities](https://snyk.io/test/npm/https-localhost/badge.svg)](https://snyk.io/test/npm/https-localhost)
 [![GitHub issues](https://img.shields.io/github/issues/daquinoaldo/https-localhost.svg)](https://github.com/daquinoaldo/https-localhost/issues)
-[![GitHub Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fdaquinoaldo%2Fhttps-localhost%2Fbadge)](https://actions-badge.atrox.dev/daquinoaldo/https-localhost/goto)
 
 
 ## Dependencies
@@ -122,8 +125,8 @@ Checkout the updated list [here](https://github.com/FiloSottile/mkcert/blob/mast
 
 ## Troubleshooting
 ### Node.js version
-https-localhost requires Node.js 8 or higher.  
-<sub>If you need compatibility with previously Node.js versions let me know, we'll try to rearrange the code.</sub>
+https-localhost is compatible with the LTS and latest version of Node.js.  
+<sub>If you need compatibility with other Node.js versions let me know, we'll try to rearrange the code.</sub>
 
 ### root required
 -  **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ serve ~/myproj`.

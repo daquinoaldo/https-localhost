@@ -1,22 +1,19 @@
-name: GitHub CI
+name: Test
 
 on: [push, pull_request]
 
 jobs:
   test:
     name: Test
-    runs-on: ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        node: [8, 10, 11, 12]
-        exclude:
-          - os: ubuntu-latest
-            node: 8
+        os: [ubuntu-latest, macOS-latest]
+        node: [10, 12, 14]
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Use Node.js ${{matrix.node}}
         uses: actions/setup-node@v1
         with:
@@ -33,7 +30,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 12

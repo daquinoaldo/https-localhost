@@ -7,9 +7,7 @@
     "pretest": "eslint --ignore-path .gitignore .",
     "test": "node node_modules/nyc/bin/nyc.js node_modules/mocha/bin/_mocha --exit",
     "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=lcov",
-    "coveralls": "node node_modules/nyc/bin/nyc.js report --reporter=text-lcov | node_modules/coveralls/bin/coveralls.js",
     "preuninstall": "node certs.js -u",
-    "build": "pkg --out-path build .",
     "start": "node index.js"
   },
   "bin": {
@@ -18,9 +16,9 @@
   "pkg": {
     "scripts": "*.js",
     "targets": [
-      "node10-macos-x64",
-      "node10-linux-x64",
-      "node10-win-x64"
+      "node12-macos-x64",
+      "node12-linux-x64",
+      "node12-win-x64"
     ]
   },
   "repository": {
@@ -46,21 +44,20 @@
   "dependencies": {
     "appdata-path": "^1.0.0",
     "compression": "^1.7.4",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-minify": "^1.0.0",
-    "spdy": "^4.0.1"
+    "spdy": "^4.0.2"
   },
   "devDependencies": {
-    "coveralls": "^3.0.6",
-    "eslint": "^6.3.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^10.0.0",
+    "eslint": "^7.10.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "mocha": "^6.2.0",
-    "nyc": "^14.1.1",
-    "pkg": "^4.4.0",
-    "sinon": "^7.4.2"
+    "mocha": "^8.1.3",
+    "nyc": "^15.1.0",
+    "sinon": "^9.2.0"
   }
 }
