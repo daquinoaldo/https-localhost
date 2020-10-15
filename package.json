@@ -2,24 +2,17 @@
   "name": "https-localhost",
   "version": "5.0.0",
   "description": "HTTPS server running on localhost",
-  "main": "index.js",
+  "main": "dist/src/cli.js",
+  "types": "dist/src/HttpsLocalhost.d.ts",
   "scripts": {
-    "pretest": "eslint --ignore-path .gitignore .",
-    "test": "node node_modules/nyc/bin/nyc.js node_modules/mocha/bin/_mocha --exit",
-    "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=lcov",
-    "preuninstall": "node certs.js -u",
-    "start": "node index.js"
+    "start": "npm run build && node dist/src/cli.js",
+    "build": "tsc",
+    "dev": "npx ts-node src/cli.ts",
+    "watch": "nodemon -w src -x 'npx ts-node' src/cli.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "sserve": "index.js"
-  },
-  "pkg": {
-    "scripts": "*.js",
-    "targets": [
-      "node12-macos-x64",
-      "node12-linux-x64",
-      "node12-win-x64"
-    ]
+    "sserve": "dist/src/cli.js"
   },
   "repository": {
     "type": "git",
@@ -30,34 +23,32 @@
     "https",
     "http2",
     "https-server",
-    "SSL",
-    "express",
-    "expressjs",
-    "express-js"
+    "ssl",
+    "tsl",
+    "certification-authority",
+    "certificate",
+    "local-development",
+    "pwa",
+    "spa"
   ],
   "author": "Aldo D'Aquino",
   "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/daquinoaldo/https-localhost/issues"
   },
-  "homepage": "https://daquinoaldo.github.io/https-localhost",
-  "dependencies": {
-    "appdata-path": "^1.0.0",
-    "compression": "^1.7.4",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "express-minify": "^1.0.0",
-    "spdy": "^4.0.2"
-  },
+  "homepage": "https://github.com/daquinoaldo/https-localhost#readme",
   "devDependencies": {
-    "eslint": "^7.10.0",
-    "eslint-config-standard": "^14.1.1",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "mocha": "^8.1.3",
-    "nyc": "^15.1.0",
-    "sinon": "^9.2.0"
+    "@types/finalhandler": "^1.1.0",
+    "@types/serve-static": "^1.13.5",
+    "@types/update-notifier": "^5.0.0",
+    "nodemon": "^2.0.5",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "devcert": "^1.1.3",
+    "finalhandler": "^1.1.2",
+    "serve-static": "^1.14.1",
+    "update-notifier": "^5.0.0"
   }
 }
