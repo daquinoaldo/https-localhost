@@ -1,6 +1,6 @@
 {
   "name": "https-localhost",
-  "version": "4.6.3",
+  "version": "4.6.4",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
   "scripts": {
