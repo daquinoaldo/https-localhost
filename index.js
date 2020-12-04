@@ -5,7 +5,8 @@ const fs = require("fs")
 const http = require("http")
 // spdy allows http2, while waiting express to support the http2 module
 const https = process.env.NODE_ENV === "production"
-  ? require("spdy") : require("https")
+  ? require("spdy")
+  : require("https")
 const express = require("express")
 const cors = require("cors")
 const getCerts = require(path.resolve(__dirname, "certs.js")).getCerts
