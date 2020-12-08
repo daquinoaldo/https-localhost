@@ -56,7 +56,7 @@ If you don't have Node.js installed just use a packaged version! Download it fro
 # Windows
 ./https-localhost-win.exe C:\User\me\myproj
 ```
-**Tip 1:** on Windows just drag the folder on the executable to serve itV.  
+**Tip 1:** on Windows just drag the folder on the executable to serve it.  
 **Tip 2:** on all platform put the executable on the folder you want to serve and double-click it.
 
 
