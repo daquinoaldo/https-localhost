@@ -11,7 +11,7 @@
     "start": "node index.js"
   },
   "bin": {
-    "serve": "index.js"
+    "https-localhost": "index.js"
   },
   "pkg": {
     "scripts": "*.js",

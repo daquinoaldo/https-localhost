@@ -38,11 +38,11 @@ sudo pacman -S nss
 npm i -g --only=prod https-localhost
 ```
 ```bash
-serve ~/myproj
+https-localhost ~/myproj
 ```
 - `sudo` may be necessary.
 - If a static path is not provided the current directory content will be served.
-- You can change the **port** setting the `PORT` environmental variable: `PORT=4433 serve ~/myproj`. Specifying port number will also prevent http to https redirect.
+- You can change the **port** setting the `PORT` environmental variable: `PORT=4433 https-localhost ~/myproj`. Specifying port number will also prevent http to https redirect.
 
 ### Binaries
 If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
@@ -91,7 +91,7 @@ const server = https.createServer(certs, app).listen(port)
 ## Production
 This tool has a production version that activates **HTTP/2**, **compression** and **minify**.
 ```bash
-NODE_ENV=production serve ~/myproj
+NODE_ENV=production https-localhost ~/myproj
 ``` 
 I decide to not activate it by default since it is usually an unwanted behaviour for localhost testing, but sometimes it could be userful, e.g. to test Progressive Web Application or more ingeneral the website performances.
 
@@ -129,14 +129,14 @@ https-localhost is compatible with the LTS and latest version of Node.js.
 <sub>If you need compatibility with other Node.js versions let me know, we'll try to rearrange the code.</sub>
 
 ### root required
--  **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ serve ~/myproj`.
+-  **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ https-localhost ~/myproj`.
 - **At each run** the password may be required to run the server on port 443 and 80. To avoid the script ask for password specify a different port number: `PORT=4433 serve ~/myproj`.
 
 ### EACCES
-Run with sudo to use the default ports 443 and 80. You can also change port with: `PORT=4433 serve ~/myproj`.
+Run with sudo to use the default ports 443 and 80. You can also change port with: `PORT=4433 https-localhost ~/myproj`.
 
 ### EADDRINUSE
-Another service on your machine is using port 443 or port 80. Stop it or change port with `PORT=4433 serve ~/myproj`.
+Another service on your machine is using port 443 or port 80. Stop it or change port with `PORT=4433 https-localhost ~/myproj`.
 
 ### Unable to run on Windows
 Windows users with spaces or quotes in the name (like Aldo D'Aquino) may experience some problems in running the script. You can try to escape this chars or put the entire path between double quotes, but I suggest you to switch to a better user name (like aldodaquino).
@@ -154,7 +154,7 @@ I've tried to reproduce this error without any success (checkout the [Travis bui
 ### ERR_SSL_PROTOCOL_ERROR
 And in general all the cases when the script runs but the connection is marked as untrusted.
 
-Force a reinstall of the certificate with `REINSTALL=true serve`. `sudo` may be required on linux and MacOS.
+Force a reinstall of the certificate with `REINSTALL=true https-localhost`. `sudo` may be required on linux and MacOS.
 
 If the problem is solved you should be able to use https-localhost also as module.
 
