@@ -169,7 +169,7 @@ Is released under [AGPL-3.0 - GNU Affero General Public License v3.0](LICENSE).
 
 ### Briefly:
 - modification and redistribution allowed for both private and **commercial use**
-- you must **grant patent rigth to the owner and to all the contributors**
+- you must **grant patent right to the owner and to all the contributors**
 - you must **keep it open source** and distribute under the **same license**
 - changes must be documented
 - include a limitation of liability and it **does not provide any warranty**
