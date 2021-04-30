@@ -1,0 +1,14 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.162.0/containers/javascript-node
+{
+	"name": "Node.js",
+	"extensions": [
+		"howardzuo.vscode-npm-dependency",
+		"streetsidesoftware.code-spell-checker",
+		"VisualStudioExptTeam.vscodeintellicode",
+		"wayou.vscode-todo-highlight",
+	],
+	"image": "mcr.microsoft.com/vscode/devcontainers/javascript-node:0-14",
+	"postCreateCommand": "npm i",
+	"remoteUser": "node" // empty for root
+}
