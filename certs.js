@@ -138,7 +138,7 @@ async function generate(appDataPath = CERT_PATH, customDomain = undefined) {
 }
 
 async function getCerts(customDomain = undefined) {
-  const domain = customDomain || "localhost"
+  const domain = process.env.DOMAIN || customDomain || "localhost"
   const certPath = process.env.CERT_PATH || CERT_PATH
   // check for updates if running as executable
   /* istanbul ignore if: cannot test pkg */
