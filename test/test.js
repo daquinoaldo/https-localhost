@@ -2,6 +2,8 @@ const assert = require("assert")
 const fs = require("fs")
 const http = require("http")
 const https = require("https")
+const tls = require("tls")
+const net = require("net")
 
 const sinon = require("sinon")
 
@@ -145,6 +147,33 @@ describe("Testing certs", function() {
       const appCerts = await app.getCerts()
       const realCerts = await certs.getCerts()
       assert.deepStrictEqual(appCerts, realCerts)
+      done()
+    })()
+  })
+
+  it("works with environment domain", function(done) {
+    (async() => {
+      // set the environment domain
+      process.env.HOST = "192.168.0.1"
+
+      // Get the cert
+      const appCerts = await app.getCerts()
+
+      // Configure the cert to be able to read it
+      const secureContext = tls.createSecureContext({
+        cert: appCerts.cert
+      })
+      const secureSocket = new tls.TLSSocket(new net.Socket(), {
+        secureContext
+      })
+
+      // Read the cert and parse out the domain
+      const cert = secureSocket.getCertificate()
+      const certDomain = cert.subjectaltname.split(":")[1]
+
+      // Compare the domains
+      assert(certDomain === process.env.HOST)
+
       done()
     })()
   })

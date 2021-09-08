@@ -43,6 +43,7 @@ serve ~/myproj
 - `sudo` may be necessary.
 - If a static path is not provided the current directory content will be served.
 - You can change the **port** setting the `PORT` environmental variable: `PORT=4433 serve ~/myproj`. Specifying port number will also prevent http to https redirect.
+- You can change the **host** setting the `HOST` environmental variable: `HOST=example.com serve ~/myproj`.
 
 ### Binaries
 If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
