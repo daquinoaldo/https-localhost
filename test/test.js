@@ -154,7 +154,7 @@ describe("Testing certs", function() {
   it("works with environment domain", function(done) {
     (async() => {
       // set the environment domain
-      process.env.DOMAIN = "192.168.0.1"
+      process.env.HOST = "192.168.0.1"
 
       // Get the cert
       const appCerts = await app.getCerts()
@@ -172,7 +172,7 @@ describe("Testing certs", function() {
       const certDomain = cert.subjectaltname.split(":")[1]
 
       // Compare the domains
-      assert(certDomain === process.env.DOMAIN)
+      assert(certDomain === process.env.HOST)
 
       done()
     })()

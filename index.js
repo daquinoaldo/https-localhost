@@ -14,7 +14,7 @@ const getCerts = require(path.resolve(__dirname, "certs.js")).getCerts
 /* CONFIGURE THE SERVER */
 
 // SSL certificate
-const createServer = (domain = process.env.DOMAIN || "localhost") => {
+const createServer = (domain = process.env.HOST || "localhost") => {
   // create a server with express
   const app = express()
 
