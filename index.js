@@ -36,9 +36,9 @@ const createServer = (domain = process.env.HOST || "localhost") => {
   // use gzip compression minify
   if (process.env.NODE_ENV === "production") {
     const compression = require("compression")
-    const minify = require("express-minify")
+    const UglifyJS = require("uglify-js")
     app.use(compression({ threshold: 1 }))
-    app.use(minify())
+    UglifyJS.minify(app)
     app.set("json spaces", 0)
   }
 
