@@ -6,7 +6,7 @@ const exec = require("child_process").exec
 const https = require("https")
 const getAppDataPath = require("appdata-path")
 
-const MKCERT_VERSION = "v1.4.3"
+const MKCERT_VERSION = "v1.4.4"
 const CERT_PATH = getAppDataPath("https-localhost")
 
 // check for updates
@@ -41,7 +41,9 @@ function getExe() {
   /* istanbul ignore next: tested on all platform on travis */
   switch (process.platform) {
     case "darwin":
-      return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
+      if (process.arch === "arm" || process.arch === "arm64")
+        return "mkcert-" + MKCERT_VERSION + "-darwin-arm64"
+      else return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
     case "linux":
       if (process.arch === "arm" || process.arch === "arm64")
         return "mkcert-" + MKCERT_VERSION + "-linux-arm"
