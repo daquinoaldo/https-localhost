@@ -41,7 +41,9 @@ function getExe() {
   /* istanbul ignore next: tested on all platform on travis */
   switch (process.platform) {
     case "darwin":
-      return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
+      if (process.arch === "arm" || process.arch === "arm64")
+        return "mkcert-" + MKCERT_VERSION + "-darwin-arm64"
+      else return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
     case "linux":
       if (process.arch === "arm" || process.arch === "arm64")
         return "mkcert-" + MKCERT_VERSION + "-linux-arm"
