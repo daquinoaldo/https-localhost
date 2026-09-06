@@ -2,5 +2,6 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "semi": false,
   "arrowParens": "avoid",
-  "singleQuote": false
+  "singleQuote": false,
+  "sortImports": true
 }

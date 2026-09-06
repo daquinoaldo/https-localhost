@@ -1,24 +1,36 @@
-const assert = require("assert")
-const { afterEach, describe, it } = require("node:test")
-const fs = require("fs")
-const http = require("http")
-const https = require("https")
-const tls = require("tls")
-const net = require("net")
-let app = require("../index.js")()
-const certs = require("../certs.js")
+import assert from "node:assert"
+import fs from "node:fs"
+import http from "node:http"
+import type { IncomingMessage, Server } from "node:http"
+import https from "node:https"
+import net from "node:net"
+import { afterEach, describe, it } from "node:test"
+import tls from "node:tls"
+
+import * as certs from "../src/certs.ts"
+import createServer from "../src/index.ts"
+import type { HttpsLocalhostApp } from "../src/index.ts"
 
 const HTTPS_PORT = 4443
 const HTTP_PORT = 8080
+let app: HttpsLocalhostApp = createServer()
 
-async function closeServer(server) {
+async function closeServer(server: Server | undefined) {
   if (!server || !server.listening) return
   server.closeAllConnections()
   server.closeIdleConnections()
   await new Promise(resolve => server.close(resolve))
 }
 
-function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
+function makeRequest(
+  path = "/",
+  secure = true,
+  port: number | string = HTTPS_PORT,
+): Promise<{
+  data: string
+  statusCode?: number
+  headers: Record<string, string | string[] | undefined>
+}> {
   const options = {
     host: "localhost",
     port: port,
@@ -31,9 +43,9 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
   const protocol = secure ? https : http
   return new Promise((resolve, reject) => {
     protocol
-      .request(options, resp => {
+      .request(options, (resp: IncomingMessage) => {
         let data = ""
-        resp.on("data", chunk => {
+        resp.on("data", (chunk: Buffer | string) => {
           data += chunk
         })
         resp.on("end", () =>
@@ -44,12 +56,19 @@ function makeRequest(path = "/", secure = true, port = HTTPS_PORT) {
           }),
         )
       })
-      .on("error", err => reject(err))
+      .on("error", (err: Error) => reject(err))
       .end()
   })
 }
 
 describe("Testing certs", { timeout: 300000 }, () => {
+  afterEach(() => {
+    certs.remove("test/custom-folder")
+    certs.remove("test/custom folder")
+    delete process.env["CERT_PATH"]
+    delete process.env["HOST"]
+  })
+
   it("can be uninstalled", () => {
     certs.remove()
   })
@@ -65,7 +84,9 @@ describe("Testing certs", { timeout: 300000 }, () => {
   it("can be installed at first run", async () => {
     certs.remove()
 
-    app.get("/test/module", (req, res) => res.send("TEST"))
+    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
+      res.send("TEST"),
+    )
     await app.listen(HTTPS_PORT)
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
@@ -73,42 +94,41 @@ describe("Testing certs", { timeout: 300000 }, () => {
   })
 
   it("can be installed in custom folder", async () => {
-    process.env.CERT_PATH = "test/custom-folder"
+    process.env["CERT_PATH"] = "test/custom-folder"
 
-    app.get("/test/module", (req, res) => res.send("TEST"))
+    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
+      res.send("TEST"),
+    )
     await app.listen(HTTPS_PORT)
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
     await closeServer(app.server)
-    delete process.env.CERT_PATH
+    delete process.env["CERT_PATH"]
   })
 
-  it("crashes if certs doesn't exists in custom folder", async t => {
-    process.env.CERT_PATH = "test/custom-folder"
+  it("crashes if certs doesn't exists in custom folder", async () => {
+    process.env["CERT_PATH"] = "test/custom-folder"
+    await certs.generate(process.env["CERT_PATH"])
     fs.unlinkSync("test/custom-folder/localhost.crt")
     fs.unlinkSync("test/custom-folder/localhost.key")
 
-    t.mock.method(process, "exit", () => {})
-    await app.listen(HTTPS_PORT)
-
-    assert.strictEqual(process.exit.mock.calls.length, 1)
-    assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
-
-    await closeServer(app.server)
-    certs.remove(process.env.CERT_PATH)
-    delete process.env.CERT_PATH
+    await assert.rejects(app.listen(HTTPS_PORT), /Certificates are missing/)
+    certs.remove(process.env["CERT_PATH"])
+    delete process.env["CERT_PATH"]
   })
 
   it("support path with spaces", async () => {
-    process.env.CERT_PATH = "test/custom folder"
+    process.env["CERT_PATH"] = "test/custom folder"
 
-    app.get("/test/module", (req, res) => res.send("TEST"))
+    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
+      res.send("TEST"),
+    )
     await app.listen(HTTPS_PORT)
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
     await closeServer(app.server)
-    certs.remove(process.env.CERT_PATH)
-    delete process.env.CERT_PATH
+    certs.remove(process.env["CERT_PATH"])
+    delete process.env["CERT_PATH"]
   })
 
   it("provides the certificate", async () => {
@@ -118,7 +138,7 @@ describe("Testing certs", { timeout: 300000 }, () => {
   })
 
   it("works with environment domain", async () => {
-    process.env.HOST = "192.168.0.1"
+    process.env["HOST"] = "192.168.0.1"
 
     const appCerts = await app.getCerts()
     const secureContext = tls.createSecureContext({
@@ -128,28 +148,33 @@ describe("Testing certs", { timeout: 300000 }, () => {
       secureContext,
     })
     const cert = secureSocket.getCertificate()
-    const certDomain = cert.subjectaltname.split(":")[1]
+    assert(cert && "subjectaltname" in cert)
+    const certDomain = cert.subjectaltname?.split(":")[1]
 
-    assert(certDomain === process.env.HOST)
+    assert(certDomain === process.env["HOST"])
   })
 })
 
 describe("Testing module", () => {
   afterEach(async () => {
     await closeServer(app.server)
-    delete process.env.PORT
+    delete process.env["PORT"]
   })
 
   it("works as express app", async () => {
-    app.get("/test/module", (req, res) => res.send("TEST"))
+    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
+      res.send("TEST"),
+    )
     await app.listen(HTTPS_PORT)
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
   })
 
   it("works with environment port", async () => {
-    app.get("/test/module", (req, res) => res.send("TEST"))
-    process.env.PORT = HTTPS_PORT
+    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
+      res.send("TEST"),
+    )
+    process.env["PORT"] = String(HTTPS_PORT)
     await app.listen()
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
@@ -159,7 +184,7 @@ describe("Testing module", () => {
 describe("Testing serve", () => {
   afterEach(async () => {
     await closeServer(app.server)
-    delete process.env.PORT
+    delete process.env["PORT"]
   })
 
   it("serves static files from custom path", async () => {
@@ -171,7 +196,7 @@ describe("Testing serve", () => {
   })
 
   it("serves static files from default env port", async () => {
-    process.env.PORT = HTTPS_PORT
+    process.env["PORT"] = String(HTTPS_PORT)
     app.serve("test")
 
     await makeRequest("/static.html").then(res =>
@@ -180,7 +205,7 @@ describe("Testing serve", () => {
   })
 
   it("includes access-control-allow-origin header", async () => {
-    process.env.PORT = HTTPS_PORT
+    process.env["PORT"] = String(HTTPS_PORT)
     app.serve("test")
 
     await makeRequest("/static.html").then(res =>
@@ -189,7 +214,7 @@ describe("Testing serve", () => {
   })
 
   it("doesn't crash on 404", async () => {
-    process.env.PORT = HTTPS_PORT
+    process.env["PORT"] = String(HTTPS_PORT)
     app.serve()
 
     await makeRequest("/do-not-exist").then(res => assert(res.statusCode === 404))
@@ -215,7 +240,7 @@ describe("Testing redirect", () => {
   afterEach(async () => {
     await closeServer(app.http)
     app.http = undefined
-    delete process.env.PORT
+    delete process.env["PORT"]
   })
 
   it("redirect http to https", async () => {
@@ -223,7 +248,7 @@ describe("Testing redirect", () => {
 
     await makeRequest("/", false, HTTP_PORT).then(res => {
       assert(res.statusCode === 301)
-      assert(res.headers.location === "https://localhost/")
+      assert(res.headers["location"] === "https://localhost/")
     })
   })
 
@@ -232,17 +257,17 @@ describe("Testing redirect", () => {
 
     await makeRequest("/", false, HTTP_PORT).then(res => {
       assert(res.statusCode === 301)
-      assert(res.headers.location === "https://localhost:4443/")
+      assert(res.headers["location"] === "https://localhost:4443/")
     })
   })
 
   it("redirect http to https with env port", async () => {
-    process.env.PORT = HTTPS_PORT
+    process.env["PORT"] = String(HTTPS_PORT)
     await app.redirect(HTTP_PORT)
 
     await makeRequest("/", false, HTTP_PORT).then(res => {
       assert(res.statusCode === 301)
-      assert(res.headers.location === "https://localhost:4443/")
+      assert(res.headers["location"] === "https://localhost:4443/")
     })
   })
 })
@@ -250,17 +275,15 @@ describe("Testing redirect", () => {
 // OTHER TESTS
 describe("Testing additional features", { timeout: 10000 }, () => {
   it("is ready for production", async () => {
-    delete require.cache[require.resolve("../index.js")]
-    process.env.NODE_ENV = "production"
-    app = require("../index.js")()
+    process.env["NODE_ENV"] = "production"
+    app = createServer()
     app.serve("test", HTTPS_PORT)
 
     await makeRequest("/static.html").then(res =>
       assert(res.headers["content-encoding"] === "gzip"),
     )
-    delete require.cache[require.resolve("../index.js")]
     await closeServer(app.server)
-    delete process.env.NODE_ENV
-    app = require("../index.js")()
+    delete process.env["NODE_ENV"]
+    app = createServer()
   })
 })
