@@ -7,30 +7,49 @@ on:
         description: Type of version upgrade (patch, minor, major)
         required: true
         default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      publish_existing:
+        description: Publish the version already on master without changing it
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2-beta
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 12
+          node-version: 22
           registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
 
       - name: Setup git
+        if: inputs.publish_existing == false
         run: |-
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        
-      - run: npm version ${{ github.event.inputs.upgrade }}
 
-      - run: git push
-      - run: git push --tags
+      - name: Bump version
+        if: inputs.publish_existing == false
+        run: npm version ${{ inputs.upgrade }}
+
+      - name: Push version
+        if: inputs.publish_existing == false
+        run: |-
+          git push
+          git push --tags
 
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Prepare build
         run: npm i -g pkg
