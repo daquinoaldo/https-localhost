@@ -36,7 +36,7 @@
     "express-js"
   ],
   "author": "Aldo D'Aquino",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/daquinoaldo/https-localhost/issues"
   },
