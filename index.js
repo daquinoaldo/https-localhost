@@ -95,27 +95,27 @@ if (require.main === module) {
   app.serve(process.argv.length === 3 ? process.argv[2] : process.cwd())
   // redirect http to https (only if https port is the default one)
   if (!process.env.PORT) app.redirect()
-}
 
-/* istanbul ignore next: cannot be tested */
-process.on("uncaughtException", function(err) {
-  switch (err.errno) {
-    case "EACCES":
-      console.error(
-        "EACCES: run as administrator to use the default ports 443 and 80. " +
-        "You can also change port with: `PORT=4433 serve ~/myproj`.")
-      break
-    case "EADDRINUSE":
-      console.error("EADDRINUSE: another service on your machine is using " +
-      "the current port.\nStop it or change port with:" +
-      "`PORT=4433 serve ~/myproj`.")
-      break
-    default:
-      console.error("Unexpected error " + err.errno + ":\n\n" + err)
-      break
-  }
-  process.exit(1)
-})
+  /* istanbul ignore next: cannot be tested */
+  process.on("uncaughtException", function(err) {
+    switch (err.errno) {
+      case "EACCES":
+        console.error(
+          "EACCES: run as administrator to use the default ports 443 and 80. " +
+          "You can also change port with: `PORT=4433 serve ~/myproj`.")
+        break
+      case "EADDRINUSE":
+        console.error("EADDRINUSE: another service on your machine is using " +
+        "the current port.\nStop it or change port with:" +
+        "`PORT=4433 serve ~/myproj`.")
+        break
+      default:
+        console.error("Unexpected error " + err.errno + ":\n\n" + err)
+        break
+    }
+    process.exit(1)
+  })
+}
 
 // export as module
 module.exports = createServer
