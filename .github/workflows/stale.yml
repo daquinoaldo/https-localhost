@@ -1,16 +1,17 @@
 name: "Stale"
 on:
   schedule:
-  - cron: "0 0 * * *"
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/stale@v3
+    - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
       with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: "Marked as stale for no activity in the past 60 days. In 7 days it will be closed unless new activity."
-        stale-pr-message: "Marked as stale for no activity in the past 60 days. In 7 days it will be closed unless new activity."
-        exempt-issue-labels: "no-stale"
-        exempt-pr-labels: "no-stale"
+        delete-branch: true

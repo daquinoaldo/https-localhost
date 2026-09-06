@@ -3,6 +3,9 @@
   "version": "4.7.2",
   "description": "HTTPS server running on localhost",
   "main": "index.js",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "pretest": "eslint --ignore-path .gitignore .",
     "test": "node node_modules/nyc/bin/nyc.js node_modules/mocha/bin/_mocha --exit",
@@ -46,8 +49,7 @@
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "uglify-js": "^3.15.1",
-    "spdy": "^4.0.2"
+    "uglify-js": "^3.15.1"
   },
   "devDependencies": {
     "eslint": "^7.25.0",
