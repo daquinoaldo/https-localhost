@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       upgrade:
-        description: Type of version upgrade (patch, minor, major)
+        description: Version action (patch, minor, major, or publish existing without bumping)
         required: true
         default: patch
         type: choice
@@ -12,11 +12,7 @@ on:
           - patch
           - minor
           - major
-      publish_existing:
-        description: Publish the version already on master without changing it
-        required: true
-        default: false
-        type: boolean
+          - existing
 
 permissions:
   contents: write
@@ -29,22 +25,22 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org/
           package-manager-cache: false
 
       - name: Setup git
-        if: inputs.publish_existing == false
+        if: inputs.upgrade != 'existing'
         run: |-
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Bump version
-        if: inputs.publish_existing == false
+        if: inputs.upgrade != 'existing'
         run: npm version ${{ inputs.upgrade }}
 
       - name: Push version
-        if: inputs.publish_existing == false
+        if: inputs.upgrade != 'existing'
         run: |-
           git push
           git push --tags
