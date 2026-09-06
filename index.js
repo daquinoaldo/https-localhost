@@ -22,10 +22,10 @@ const createServer = (domain = process.env.HOST || "localhost") => {
   app.getCerts = getCerts
 
   // override the default express listen method to use our server
-  app.listen = async function(port = process.env.PORT ||
-  /* istanbul ignore next: cannot be tested on Travis */ 443) {
-    app.server = https.createServer(await getCerts(domain), app)
-      .listen(port)
+  app.listen = async function (
+    port = process.env.PORT || /* istanbul ignore next: cannot be tested on Travis */ 443,
+  ) {
+    app.server = https.createServer(await getCerts(domain), app).listen(port)
     console.info("Server running on port " + port + ".")
     return app.server
   }
@@ -42,36 +42,41 @@ const createServer = (domain = process.env.HOST || "localhost") => {
   /* SETUP USEFUL FUNCTIONS */
 
   // redirect http to https, usage `app.redirect()`
-  app.redirect = function(
+  app.redirect = function (
     /* istanbul ignore next: cannot be tested on Travis */ httpPort = 80,
-    httpsPort = process.env.PORT || 443) {
-    app.http = http.createServer((req, res) => {
-      const reqHost = req.headers.host
-        ? req.headers.host.replace(":" + httpPort, "")
-        : /* istanbul ignore next: cannot be tested */ "localhost"
-      res.writeHead(301, {
-        Location: "https://" + reqHost +
-          (httpsPort !== 443 ? ":" + httpsPort : "") + (req.url ||
-        /* istanbul ignore next: cannot be tested */ "")
+    httpsPort = process.env.PORT || 443,
+  ) {
+    app.http = http
+      .createServer((req, res) => {
+        const reqHost = req.headers.host
+          ? req.headers.host.replace(":" + httpPort, "")
+          : /* istanbul ignore next: cannot be tested */ "localhost"
+        res.writeHead(301, {
+          Location:
+            "https://" +
+            reqHost +
+            (httpsPort !== 443 ? ":" + httpsPort : "") +
+            (req.url || /* istanbul ignore next: cannot be tested */ ""),
+        })
+        res.end()
       })
-      res.end()
-    }).listen(httpPort)
+      .listen(httpPort)
     console.info("http to https redirection active.")
   }
 
   // serve static content, usage `app.serve([path])`
-  app.serve = function(staticPath = process.cwd(), port = process.env.PORT ||
-  /* istanbul ignore next: cannot be tested on Travis */ 443) {
+  app.serve = function (
+    staticPath = process.cwd(),
+    port = process.env.PORT || /* istanbul ignore next: cannot be tested on Travis */ 443,
+  ) {
     app.use(express.static(staticPath))
     // redirect 404 to 404.html or to index.html
     app.use((req, res) => {
       const p404 = staticPath + "/404.html"
       const index = staticPath + "/index.html"
       // istanbul ignore else: not interesting
-      if (fs.existsSync(p404))
-        res.status(404).sendFile(path.resolve(p404))
-      else if (fs.existsSync(index))
-        res.status(200).sendFile(path.resolve(index))
+      if (fs.existsSync(p404)) res.status(404).sendFile(path.resolve(p404))
+      else if (fs.existsSync(index)) res.status(200).sendFile(path.resolve(index))
       else res.status(404).send(req.path + " not found.")
     })
     console.info("Serving static path: " + staticPath)
@@ -94,17 +99,20 @@ if (require.main === module) {
   if (!process.env.PORT) app.redirect()
 
   /* istanbul ignore next: cannot be tested */
-  process.on("uncaughtException", function(err) {
+  process.on("uncaughtException", function (err) {
     switch (err.errno) {
       case "EACCES":
         console.error(
           "EACCES: run as administrator to use the default ports 443 and 80. " +
-          "You can also change port with: `PORT=4433 serve ~/myproj`.")
+            "You can also change port with: `PORT=4433 serve ~/myproj`.",
+        )
         break
       case "EADDRINUSE":
-        console.error("EADDRINUSE: another service on your machine is using " +
-        "the current port.\nStop it or change port with:" +
-        "`PORT=4433 serve ~/myproj`.")
+        console.error(
+          "EADDRINUSE: another service on your machine is using " +
+            "the current port.\nStop it or change port with:" +
+            "`PORT=4433 serve ~/myproj`.",
+        )
         break
       default:
         console.error("Unexpected error " + err.errno + ":\n\n" + err)

@@ -1,4 +1,5 @@
 const assert = require("assert")
+const { describe, it } = require("node:test")
 
 describe("Testing module import", () => {
   it("doesn't install an uncaughtException handler when imported", () => {
@@ -8,9 +9,6 @@ describe("Testing module import", () => {
     delete require.cache[modulePath]
     require(modulePath)
 
-    assert.strictEqual(
-      process.listenerCount("uncaughtException"),
-      listenersBefore
-    )
+    assert.strictEqual(process.listenerCount("uncaughtException"), listenersBefore)
   })
 })
