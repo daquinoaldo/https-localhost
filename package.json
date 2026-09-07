@@ -69,17 +69,13 @@
   },
   "dependencies": {
     "appdata-path": "^1.0.0",
-    "compression": "^1.8.1",
     "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "uglify-js": "^3.19.3"
+    "express": "^5.2.1"
   },
   "devDependencies": {
-    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.4.1",
-    "@types/uglify-js": "^3.17.5",
     "oxfmt": "^0.66.0",
     "oxlint": "^1.81.0",
     "typescript": "^7.0.2"

@@ -5,7 +5,6 @@ import http from "node:http"
 import https from "node:https"
 import path from "node:path"
 
-import compression from "compression"
 import cors from "cors"
 import express from "express"
 import type { Express, Request, Response } from "express"
@@ -30,11 +29,6 @@ const createServer = (domain = process.env["HOST"] || "localhost"): HttpsLocalho
     app.server = https.createServer(await getCerts(domain), app as unknown as Express).listen(port)
     console.info("Server running on port " + port + ".")
     return app.server
-  }
-
-  if (process.env["NODE_ENV"] === "production") {
-    app.use(compression({ threshold: 1 }))
-    app.set("json spaces", 0)
   }
 
   app.redirect = function (httpPort = 80, httpsPort = Number(process.env["PORT"]) || 443) {

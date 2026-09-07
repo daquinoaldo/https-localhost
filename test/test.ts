@@ -63,7 +63,6 @@ async function makeRequest(
     port: port,
     path: requestPath,
     method: "GET",
-    headers: { "accept-encoding": "gzip" },
     ca: rootCA ? [rootCA] : undefined,
     agent: false,
   }
@@ -296,21 +295,5 @@ describe("Testing redirect", () => {
       assert(res.statusCode === 301)
       assert(res.headers["location"] === "https://localhost:4443/")
     })
-  })
-})
-
-// OTHER TESTS
-describe("Testing additional features", { timeout: 10000 }, () => {
-  it("is ready for production", async () => {
-    process.env["NODE_ENV"] = "production"
-    app = createServer()
-    app.serve("test", HTTPS_PORT)
-
-    await makeRequest("/static.html").then(res =>
-      assert(res.headers["content-encoding"] === "gzip"),
-    )
-    await closeServer(app.server)
-    delete process.env["NODE_ENV"]
-    app = createServer()
   })
 })
