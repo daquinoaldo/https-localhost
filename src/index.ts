@@ -54,13 +54,21 @@ const createServer = (domain = process.env["HOST"] || "localhost"): HttpsLocalho
   }
 
   app.serve = function (staticPath = process.cwd(), port = Number(process.env["PORT"]) || 443) {
+    const p404 = staticPath + "/404.html"
+    const index = staticPath + "/index.html"
+    const fallback = fs.existsSync(p404)
+      ? { status: 404, content: fs.readFileSync(path.resolve(p404)) }
+      : fs.existsSync(index)
+        ? { status: 200, content: fs.readFileSync(path.resolve(index)) }
+        : undefined
+
     app.use(express.static(staticPath))
-    app.use((req: Request, res: Response) => {
-      const p404 = staticPath + "/404.html"
-      const index = staticPath + "/index.html"
-      if (fs.existsSync(p404)) res.status(404).sendFile(path.resolve(p404))
-      else if (fs.existsSync(index)) res.status(200).sendFile(path.resolve(index))
-      else res.status(404).send(req.path + " not found.")
+    app.use((_req: Request, res: Response) => {
+      if (fallback) {
+        res.status(fallback.status).type("html").send(fallback.content)
+      } else {
+        res.status(404).send("Not found.")
+      }
     })
     console.info("Serving static path: " + staticPath)
     void app.listen(port)

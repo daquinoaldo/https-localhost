@@ -1,19 +1,45 @@
 import assert from "node:assert"
+import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import http from "node:http"
 import type { IncomingMessage, Server } from "node:http"
 import https from "node:https"
 import net from "node:net"
+import path from "node:path"
 import { afterEach, describe, it } from "node:test"
 import tls from "node:tls"
+
+import appDataPathPkg from "appdata-path"
 
 import * as certs from "../src/certs.ts"
 import createServer from "../src/index.ts"
 import type { HttpsLocalhostApp } from "../src/index.ts"
 
+const getAppDataPath =
+  typeof appDataPathPkg === "function"
+    ? appDataPathPkg
+    : (appDataPathPkg as unknown as { default: (name?: string) => string }).default
+
 const HTTPS_PORT = 4443
 const HTTP_PORT = 8080
 let app: HttpsLocalhostApp = createServer()
+
+function getRootCA(): Buffer | undefined {
+  try {
+    const certDir = getAppDataPath("https-localhost")
+    const files = fs.readdirSync(certDir)
+    const exe = files.find(file => file.startsWith("mkcert"))
+    if (!exe) return undefined
+    const caRoot = execFileSync(path.join(certDir, exe), ["-CAROOT"]).toString().trim()
+    const rootCAPath = path.join(caRoot, "rootCA.pem")
+    if (fs.existsSync(rootCAPath)) {
+      return fs.readFileSync(rootCAPath)
+    }
+  } catch {
+    // Ignore error if CA root cannot be found yet
+  }
+  return undefined
+}
 
 async function closeServer(server: Server | undefined) {
   if (!server || !server.listening) return
@@ -22,8 +48,8 @@ async function closeServer(server: Server | undefined) {
   await new Promise(resolve => server.close(resolve))
 }
 
-function makeRequest(
-  path = "/",
+async function makeRequest(
+  requestPath = "/",
   secure = true,
   port: number | string = HTTPS_PORT,
 ): Promise<{
@@ -31,13 +57,14 @@ function makeRequest(
   statusCode?: number
   headers: Record<string, string | string[] | undefined>
 }> {
-  const options = {
+  const rootCA = secure ? getRootCA() : undefined
+  const options: https.RequestOptions = {
     host: "localhost",
     port: port,
-    path: path,
+    path: requestPath,
     method: "GET",
     headers: { "accept-encoding": "gzip" },
-    rejectUnauthorized: false,
+    ca: rootCA ? [rootCA] : undefined,
     agent: false,
   }
   const protocol = secure ? https : http

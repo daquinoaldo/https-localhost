@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { exec } from "node:child_process"
+import { execFile } from "node:child_process"
 import fs from "node:fs"
 import https from "node:https"
 import path from "node:path"
@@ -72,35 +72,40 @@ function getExe(): string {
 function download(url: string, destination: string): Promise<void> {
   console.log("Downloading the mkcert executable...")
   const file = fs.createWriteStream(destination)
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     function get(currentUrl: string): void {
-      https.get(currentUrl, response => {
-        if (response.statusCode === 302 && response.headers.location) get(response.headers.location)
-        else response.pipe(file).on("finish", resolve)
-      })
+      https
+        .get(currentUrl, response => {
+          if (response.statusCode === 302 && response.headers.location) {
+            get(response.headers.location)
+            return
+          }
+          response.pipe(file)
+          file.on("finish", () => {
+            file.close(err => {
+              if (err) reject(err)
+              else resolve()
+            })
+          })
+          file.on("error", reject)
+        })
+        .on("error", reject)
     }
     get(url)
   })
 }
 
 async function runMkcert(appDataPath: string, exe: string, domain: string): Promise<void> {
-  const escapeSpaces = (value: string): string => {
-    if (process.platform === "darwin" || process.platform === "linux")
-      return value.replace(/(?<!\\) /g, "\\ ")
-    if (process.platform === "win32") return '"' + value + '"'
-    return value
-  }
-
-  const exePath = escapeSpaces(path.join(appDataPath, exe))
-  const crtPath = escapeSpaces(path.join(appDataPath, domain + ".crt"))
-  const keyPath = escapeSpaces(path.join(appDataPath, domain + ".key"))
-  const command = `${exePath} -install -cert-file ${crtPath} -key-file ${keyPath} ${domain}`
+  const exePath = path.join(appDataPath, exe)
+  const crtPath = path.join(appDataPath, domain + ".crt")
+  const keyPath = path.join(appDataPath, domain + ".key")
+  const args = ["-install", "-cert-file", crtPath, "-key-file", keyPath, domain]
 
   if (process.platform === "win32") await new Promise(resolve => setTimeout(resolve, 3000))
 
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
-    exec(command, (error, stdout, stderr) => {
+    execFile(exePath, args, (error, stdout, stderr) => {
       if (stdout) console.log(stdout)
       if (stderr) console.error(stderr)
       if (error) {
@@ -121,8 +126,10 @@ async function generate(appDataPath = CERT_PATH, customDomain?: string): Promise
   const url = "https://github.com/FiloSottile/mkcert/releases/download/" + MKCERT_VERSION + "/"
   const exe = getExe()
   const exePath = path.join(appDataPath, exe)
-  await download(url + exe, exePath)
-  fs.chmodSync(exePath, "0755")
+  if (!fs.existsSync(exePath)) {
+    await download(url + exe, exePath)
+    fs.chmodSync(exePath, "0755")
+  }
   await runMkcert(appDataPath, exe, domain)
   console.log("Certificates generated, installed and trusted. Ready to go!")
 }
