@@ -68,7 +68,6 @@
     "start": "node src/cli.ts"
   },
   "dependencies": {
-    "appdata-path": "^1.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "zod": "^4.5.4"

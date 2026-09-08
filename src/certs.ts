@@ -5,12 +5,7 @@ import fs from "node:fs"
 import https from "node:https"
 import path from "node:path"
 
-import appDataPathPkg from "appdata-path"
-
-const getAppDataPath =
-  typeof appDataPathPkg === "function"
-    ? appDataPathPkg
-    : (appDataPathPkg as unknown as { default: (name?: string) => string }).default
+import { getAppDataPath } from "./app-data-path.ts"
 
 const MKCERT_VERSION = "v1.4.4"
 const DEFAULT_CERT_PATH = getAppDataPath("https-localhost")

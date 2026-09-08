@@ -9,17 +9,11 @@ import path from "node:path"
 import { afterEach, describe, it } from "node:test"
 import tls from "node:tls"
 
-import appDataPathPkg from "appdata-path"
-
+import { getAppDataPath } from "../src/app-data-path.ts"
 import { generate, getCerts, remove } from "../src/certs.ts"
 import { getEnv } from "../src/env.ts"
 import createServer from "../src/index.ts"
 import type { HttpsLocalhostApp } from "../src/index.ts"
-
-const getAppDataPath =
-  typeof appDataPathPkg === "function"
-    ? appDataPathPkg
-    : (appDataPathPkg as unknown as { default: (name?: string) => string }).default
 
 const HTTPS_PORT = 4443
 const HTTP_PORT = 8080
