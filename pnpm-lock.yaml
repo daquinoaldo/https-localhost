@@ -118,6 +118,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@8.1.1)
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -852,6 +855,9 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
+  zod@4.5.4:
+    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
+
 snapshots:
 
   '@oxfmt/binding-android-arm-eabi@0.66.0':
@@ -1461,3 +1467,5 @@ snapshots:
   vary@1.1.2: {}
 
   wrappy@1.0.2: {}
+
+  zod@4.5.4: {}

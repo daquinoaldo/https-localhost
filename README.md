@@ -20,8 +20,12 @@ How it works:
 
 - `sudo` may be necessary.
 - If a static path is not provided the current directory content will be served.
-- You can change the **port** setting the `PORT` environmental variable: `PORT=4433 serve ~/myproj`. Specifying port number will also prevent http to https redirect.
-- You can change the **host** setting the `HOST` environmental variable: `HOST=example.com serve ~/myproj`.
+- CLI flags override environment variables:
+  - `-p, --port <port>`: port to listen on (`PORT`)
+  - `-H, --host <host>`: domain for the certificate (`HOST`)
+  - `--cert-path <path>`: custom certificate directory (`CERT_PATH`)
+  - `--reinstall`: force certificate re-generation (`REINSTALL=true`)
+- Specifying a port number prevents HTTP to HTTPS redirect.
 
 If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
 
@@ -38,15 +42,13 @@ Then put in your `index.js` file:
 ```js
 const app = require("https-localhost")()
 
-app.listen(port) // 443 if port is omitted
-app.redirect() // redirects http (port 80) to https
-
-// or serve static files
+app.listen()
+app.redirect()
 app.serve(path)
 
-// or just get the certificates and use them in your own server
-const certs = await httpsLocalhost.getCerts()
-const server = https.createServer(certs, app).listen(port)
+// or get the certificates and use them in your own server
+const { getCerts } = require("https-localhost/certs")
+const certs = await getCerts()
 ```
 
 ## Troubleshooting

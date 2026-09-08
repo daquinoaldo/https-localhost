@@ -13,7 +13,8 @@ const getAppDataPath =
     : (appDataPathPkg as unknown as { default: (name?: string) => string }).default
 
 const MKCERT_VERSION = "v1.4.4"
-const CERT_PATH = getAppDataPath("https-localhost")
+const DEFAULT_CERT_PATH = getAppDataPath("https-localhost")
+const DEFAULT_DOMAIN = "localhost"
 
 type CertificatePair = {
   key: Buffer
@@ -95,7 +96,15 @@ function download(url: string, destination: string): Promise<void> {
   })
 }
 
-async function runMkcert(appDataPath: string, exe: string, domain: string): Promise<void> {
+async function runMkcert({
+  appDataPath,
+  exe,
+  domain,
+}: {
+  appDataPath: string
+  exe: string
+  domain: string
+}): Promise<void> {
   const exePath = path.join(appDataPath, exe)
   const crtPath = path.join(appDataPath, domain + ".crt")
   const keyPath = path.join(appDataPath, domain + ".key")
@@ -118,8 +127,13 @@ async function runMkcert(appDataPath: string, exe: string, domain: string): Prom
   })
 }
 
-async function generate(appDataPath = CERT_PATH, customDomain?: string): Promise<void> {
-  const domain = customDomain || "localhost"
+async function generate({
+  appDataPath = DEFAULT_CERT_PATH,
+  domain = DEFAULT_DOMAIN,
+}: {
+  appDataPath?: string
+  domain?: string
+} = {}): Promise<void> {
   console.info("Generating certificates...")
   console.log("Certificates path: " + appDataPath + ". Never modify nor share this files.")
   if (!fs.existsSync(appDataPath)) fs.mkdirSync(appDataPath, { recursive: true })
@@ -130,34 +144,43 @@ async function generate(appDataPath = CERT_PATH, customDomain?: string): Promise
     await download(url + exe, exePath)
     fs.chmodSync(exePath, "0755")
   }
-  await runMkcert(appDataPath, exe, domain)
+  await runMkcert({ appDataPath, exe, domain })
   console.log("Certificates generated, installed and trusted. Ready to go!")
 }
 
-async function getCerts(customDomain?: string): Promise<CertificatePair> {
-  const domain = process.env["HOST"] || customDomain || "localhost"
-  const certPath = process.env["CERT_PATH"] || CERT_PATH
+async function getCerts({
+  domain = DEFAULT_DOMAIN,
+  certPath = DEFAULT_CERT_PATH,
+  reinstall = false,
+}: {
+  domain?: string
+  certPath?: string
+  reinstall?: boolean
+} = {}): Promise<CertificatePair> {
   if ((process as NodeJS.Process & { pkg?: boolean }).pkg) checkUpdates()
-  if (process.env["REINSTALL"] || !fs.existsSync(path.join(certPath, getExe())))
-    await generate(certPath, domain)
+  if (reinstall || !fs.existsSync(path.join(certPath, getExe())))
+    await generate({ appDataPath: certPath, domain })
   try {
     return {
       key: fs.readFileSync(path.join(certPath, domain + ".key")),
       cert: fs.readFileSync(path.join(certPath, domain + ".crt")),
     }
   } catch {
-    if (certPath !== CERT_PATH) {
+    if (certPath !== DEFAULT_CERT_PATH) {
       console.error(
         "Cannot find localhost.key and localhost.crt in the specified path: " + certPath,
       )
       throw new Error("Certificates are missing from the specified path: " + certPath)
     }
-    await generate(CERT_PATH, domain)
-    return getCerts(domain)
+    await generate({ appDataPath: DEFAULT_CERT_PATH, domain })
+    return {
+      key: fs.readFileSync(path.join(DEFAULT_CERT_PATH, domain + ".key")),
+      cert: fs.readFileSync(path.join(DEFAULT_CERT_PATH, domain + ".crt")),
+    }
   }
 }
 
-function remove(appDataPath = CERT_PATH): void {
+function remove(appDataPath = DEFAULT_CERT_PATH): void {
   if (fs.existsSync(appDataPath)) {
     fs.readdirSync(appDataPath).forEach(file => fs.unlinkSync(path.join(appDataPath, file)))
     fs.rmdirSync(appDataPath)

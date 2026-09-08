@@ -12,7 +12,6 @@ import type { Express, Request, Response } from "express"
 import { getCerts } from "./certs.ts"
 
 export type HttpsLocalhostApp = Omit<Express, "listen"> & {
-  getCerts: typeof getCerts
   server?: https.Server
   http?: http.Server
   listen: (port?: number) => Promise<https.Server>
@@ -20,23 +19,37 @@ export type HttpsLocalhostApp = Omit<Express, "listen"> & {
   serve: (staticPath?: string, port?: number) => void
 }
 
-const createServer = (domain = process.env["HOST"] || "localhost"): HttpsLocalhostApp => {
+const createServer = ({
+  domain = "localhost",
+  certPath,
+  reinstall,
+}: {
+  domain?: string
+  certPath?: string
+  reinstall?: boolean
+} = {}): HttpsLocalhostApp => {
   const app = express() as unknown as HttpsLocalhostApp
 
   app.use(cors())
-  app.getCerts = getCerts
-  app.listen = async function (port = Number(process.env["PORT"]) || 443) {
-    app.server = https.createServer(await getCerts(domain), app as unknown as Express).listen(port)
+  app.listen = async function (port = 443) {
+    app.server = https
+      .createServer(
+        await getCerts({
+          domain,
+          certPath,
+          reinstall,
+        }),
+        app as unknown as Express,
+      )
+      .listen(port)
     console.info("Server running on port " + port + ".")
     return app.server
   }
 
-  app.redirect = function (httpPort = 80, httpsPort = Number(process.env["PORT"]) || 443) {
+  app.redirect = function (httpPort = 80, httpsPort = 443) {
     app.http = http
       .createServer((req, res) => {
-        const reqHost = req.headers.host
-          ? req.headers.host.replace(":" + httpPort, "")
-          : "localhost"
+        const reqHost = req.headers.host ? req.headers.host.replace(":" + httpPort, "") : domain
         res.writeHead(301, {
           Location:
             "https://" + reqHost + (httpsPort !== 443 ? ":" + httpsPort : "") + (req.url || ""),
@@ -47,7 +60,7 @@ const createServer = (domain = process.env["HOST"] || "localhost"): HttpsLocalho
     console.info("http to https redirection active.")
   }
 
-  app.serve = function (staticPath = process.cwd(), port = Number(process.env["PORT"]) || 443) {
+  app.serve = function (staticPath = process.cwd(), port = 443) {
     const p404 = staticPath + "/404.html"
     const index = staticPath + "/index.html"
     const fallback = fs.existsSync(p404)

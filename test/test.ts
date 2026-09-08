@@ -1,5 +1,5 @@
 import assert from "node:assert"
-import { execFileSync } from "node:child_process"
+import { execFileSync, spawn } from "node:child_process"
 import fs from "node:fs"
 import http from "node:http"
 import type { IncomingMessage, Server } from "node:http"
@@ -12,6 +12,7 @@ import tls from "node:tls"
 import appDataPathPkg from "appdata-path"
 
 import * as certs from "../src/certs.ts"
+import { getEnv } from "../src/env.ts"
 import createServer from "../src/index.ts"
 import type { HttpsLocalhostApp } from "../src/index.ts"
 
@@ -110,6 +111,7 @@ describe("Testing certs", { timeout: 300000 }, () => {
   it("can be installed at first run", async () => {
     certs.remove()
 
+    app = createServer()
     app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
       res.send("TEST"),
     )
@@ -120,8 +122,7 @@ describe("Testing certs", { timeout: 300000 }, () => {
   })
 
   it("can be installed in custom folder", async () => {
-    process.env["CERT_PATH"] = "test/custom-folder"
-
+    app = createServer({ certPath: "test/custom-folder" })
     app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
       res.send("TEST"),
     )
@@ -129,22 +130,21 @@ describe("Testing certs", { timeout: 300000 }, () => {
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
     await closeServer(app.server)
-    delete process.env["CERT_PATH"]
   })
 
   it("crashes if certs doesn't exists in custom folder", async () => {
-    process.env["CERT_PATH"] = "test/custom-folder"
-    await certs.generate(process.env["CERT_PATH"])
+    const customCertPath = "test/custom-folder"
+    await certs.generate({ appDataPath: customCertPath })
     fs.unlinkSync("test/custom-folder/localhost.crt")
     fs.unlinkSync("test/custom-folder/localhost.key")
 
+    app = createServer({ certPath: customCertPath })
     await assert.rejects(app.listen(HTTPS_PORT), /Certificates are missing/)
-    certs.remove(process.env["CERT_PATH"])
-    delete process.env["CERT_PATH"]
+    certs.remove(customCertPath)
   })
 
   it("support path with spaces", async () => {
-    process.env["CERT_PATH"] = "test/custom folder"
+    app = createServer({ certPath: "test/custom folder" })
 
     app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
       res.send("TEST"),
@@ -153,20 +153,26 @@ describe("Testing certs", { timeout: 300000 }, () => {
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
     await closeServer(app.server)
-    certs.remove(process.env["CERT_PATH"])
-    delete process.env["CERT_PATH"]
+    certs.remove("test/custom folder")
   })
 
   it("provides the certificate", async () => {
-    const appCerts = await app.getCerts()
-    const realCerts = await certs.getCerts()
+    const env = getEnv()
+    const appCerts = await certs.getCerts({
+      domain: env.HOST,
+      certPath: env.CERT_PATH,
+      reinstall: env.REINSTALL,
+    })
+    const realCerts = await certs.getCerts({
+      domain: env.HOST,
+      certPath: env.CERT_PATH,
+      reinstall: env.REINSTALL,
+    })
     assert.deepStrictEqual(appCerts, realCerts)
   })
 
   it("works with environment domain", async () => {
-    process.env["HOST"] = "192.168.0.1"
-
-    const appCerts = await app.getCerts()
+    const appCerts = await certs.getCerts({ domain: "192.168.0.1" })
     const secureContext = tls.createSecureContext({
       cert: appCerts.cert,
     })
@@ -177,7 +183,7 @@ describe("Testing certs", { timeout: 300000 }, () => {
     assert(cert && "subjectaltname" in cert)
     const certDomain = cert.subjectaltname?.split(":")[1]
 
-    assert(certDomain === process.env["HOST"])
+    assert(certDomain === "192.168.0.1")
   })
 })
 
@@ -188,6 +194,7 @@ describe("Testing module", () => {
   })
 
   it("works as express app", async () => {
+    app = createServer()
     app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
       res.send("TEST"),
     )
@@ -197,11 +204,11 @@ describe("Testing module", () => {
   })
 
   it("works with environment port", async () => {
+    app = createServer()
     app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
       res.send("TEST"),
     )
-    process.env["PORT"] = String(HTTPS_PORT)
-    await app.listen()
+    await app.listen(HTTPS_PORT)
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
   })
@@ -214,6 +221,7 @@ describe("Testing serve", () => {
   })
 
   it("serves static files from custom path", async () => {
+    app = createServer()
     app.serve("test", HTTPS_PORT)
 
     await makeRequest("/static.html").then(res =>
@@ -222,8 +230,8 @@ describe("Testing serve", () => {
   })
 
   it("serves static files from default env port", async () => {
-    process.env["PORT"] = String(HTTPS_PORT)
-    app.serve("test")
+    app = createServer()
+    app.serve("test", HTTPS_PORT)
 
     await makeRequest("/static.html").then(res =>
       assert(res.data.toString() === fs.readFileSync("test/static.html").toString()),
@@ -231,8 +239,8 @@ describe("Testing serve", () => {
   })
 
   it("includes access-control-allow-origin header", async () => {
-    process.env["PORT"] = String(HTTPS_PORT)
-    app.serve("test")
+    app = createServer()
+    app.serve("test", HTTPS_PORT)
 
     await makeRequest("/static.html").then(res =>
       assert(res.headers["access-control-allow-origin"] === "*"),
@@ -240,13 +248,14 @@ describe("Testing serve", () => {
   })
 
   it("doesn't crash on 404", async () => {
-    process.env["PORT"] = String(HTTPS_PORT)
-    app.serve()
+    app = createServer()
+    app.serve(undefined, HTTPS_PORT)
 
     await makeRequest("/do-not-exist").then(res => assert(res.statusCode === 404))
   })
 
   it("looks for a 404.html file", async () => {
+    app = createServer()
     await app.serve("test", HTTPS_PORT)
 
     await makeRequest("/do-not-exist.html").then(res => {
@@ -256,6 +265,7 @@ describe("Testing serve", () => {
   })
 
   it("doesn't crash if the static path doesn't exists", async () => {
+    app = createServer()
     app.serve("does-not-exist", HTTPS_PORT)
 
     await makeRequest("/").then(res => assert(res.statusCode === 404))
@@ -270,6 +280,7 @@ describe("Testing redirect", () => {
   })
 
   it("redirect http to https", async () => {
+    app = createServer()
     await app.redirect(HTTP_PORT)
 
     await makeRequest("/", false, HTTP_PORT).then(res => {
@@ -279,6 +290,7 @@ describe("Testing redirect", () => {
   })
 
   it("redirect http to https with custom ports", async () => {
+    app = createServer()
     await app.redirect(HTTP_PORT, HTTPS_PORT)
 
     await makeRequest("/", false, HTTP_PORT).then(res => {
@@ -288,12 +300,39 @@ describe("Testing redirect", () => {
   })
 
   it("redirect http to https with env port", async () => {
-    process.env["PORT"] = String(HTTPS_PORT)
-    await app.redirect(HTTP_PORT)
+    app = createServer()
+    await app.redirect(HTTP_PORT, HTTPS_PORT)
 
     await makeRequest("/", false, HTTP_PORT).then(res => {
       assert(res.statusCode === 301)
       assert(res.headers["location"] === "https://localhost:4443/")
     })
+  })
+})
+
+describe("Testing CLI and config", () => {
+  const cliPath = path.resolve("src/cli.ts")
+
+  it("CLI flags override environment", async () => {
+    const testDir = path.resolve("test")
+    const proc = spawn("node", [cliPath, "--port", "4448", testDir], {
+      env: { ...process.env, PORT: "4447" },
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        proc.stdout.on("data", (data: Buffer) => {
+          if (data.toString().includes("Server running on port 4448")) resolve()
+        })
+        proc.stderr.on("data", (data: Buffer) => {
+          if (data.toString().includes("Server running on port 4448")) resolve()
+        })
+        proc.on("error", reject)
+        setTimeout(() => reject(new Error("Timeout waiting for server")), 5000)
+      })
+    } finally {
+      proc.kill("SIGTERM")
+    }
   })
 })
