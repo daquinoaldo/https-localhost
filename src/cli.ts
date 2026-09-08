@@ -56,14 +56,14 @@ process.on("uncaughtException", err => {
     case "EACCES":
       console.error(
         "EACCES: run as administrator to use the default ports 443 and 80. " +
-        "You can also change port with: `PORT=4433 serve ~/myproj` or `serve -p 4433 ~/myproj`.",
+          "You can also change port with: `PORT=4433 serve ~/myproj` or `serve -p 4433 ~/myproj`.",
       )
       break
     case "EADDRINUSE":
       console.error(
         "EADDRINUSE: another service on your machine is using " +
-        "the current port.\nStop it or change port with: " +
-        "`PORT=4433 serve ~/myproj` or `serve -p 4433 ~/myproj`.",
+          "the current port.\nStop it or change port with: " +
+          "`PORT=4433 serve ~/myproj` or `serve -p 4433 ~/myproj`.",
       )
       break
     default:

@@ -11,7 +11,7 @@ import tls from "node:tls"
 
 import appDataPathPkg from "appdata-path"
 
-import * as certs from "../src/certs.ts"
+import { generate, getCerts, remove } from "../src/certs.ts"
 import { getEnv } from "../src/env.ts"
 import createServer from "../src/index.ts"
 import type { HttpsLocalhostApp } from "../src/index.ts"
@@ -90,26 +90,26 @@ async function makeRequest(
 
 describe("Testing certs", { timeout: 300000 }, () => {
   afterEach(() => {
-    certs.remove("test/custom-folder")
-    certs.remove("test/custom folder")
+    remove("test/custom-folder")
+    remove("test/custom folder")
     delete process.env["CERT_PATH"]
     delete process.env["HOST"]
   })
 
   it("can be uninstalled", () => {
-    certs.remove()
+    remove()
   })
 
   it("uninstall is idempotent (doesn't fail if called twice)", () => {
-    certs.remove()
+    remove()
   })
 
   it("can be installed", async () => {
-    await certs.generate()
+    await generate()
   })
 
   it("can be installed at first run", async () => {
-    certs.remove()
+    remove()
 
     app = createServer()
     app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
@@ -134,13 +134,13 @@ describe("Testing certs", { timeout: 300000 }, () => {
 
   it("crashes if certs doesn't exists in custom folder", async () => {
     const customCertPath = "test/custom-folder"
-    await certs.generate({ appDataPath: customCertPath })
+    await generate({ appDataPath: customCertPath })
     fs.unlinkSync("test/custom-folder/localhost.crt")
     fs.unlinkSync("test/custom-folder/localhost.key")
 
     app = createServer({ certPath: customCertPath })
     await assert.rejects(app.listen(HTTPS_PORT), /Certificates are missing/)
-    certs.remove(customCertPath)
+    remove(customCertPath)
   })
 
   it("support path with spaces", async () => {
@@ -153,17 +153,17 @@ describe("Testing certs", { timeout: 300000 }, () => {
 
     await makeRequest("/test/module").then(res => assert(res.data === "TEST"))
     await closeServer(app.server)
-    certs.remove("test/custom folder")
+    remove("test/custom folder")
   })
 
   it("provides the certificate", async () => {
     const env = getEnv()
-    const appCerts = await certs.getCerts({
+    const appCerts = await getCerts({
       domain: env.HOST,
       certPath: env.CERT_PATH,
       reinstall: env.REINSTALL,
     })
-    const realCerts = await certs.getCerts({
+    const realCerts = await getCerts({
       domain: env.HOST,
       certPath: env.CERT_PATH,
       reinstall: env.REINSTALL,
@@ -172,7 +172,7 @@ describe("Testing certs", { timeout: 300000 }, () => {
   })
 
   it("works with environment domain", async () => {
-    const appCerts = await certs.getCerts({ domain: "192.168.0.1" })
+    const appCerts = await getCerts({ domain: "192.168.0.1" })
     const secureContext = tls.createSecureContext({
       cert: appCerts.cert,
     })
