@@ -23,83 +23,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@d9184bf108216479bc5a137cc391f4d7b14c870b # v6.1.0
+        with:
+          version: 12.3.4
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 26
           registry-url: https://registry.npmjs.org/
-          package-manager-cache: false
+          cache: pnpm
 
-      - name: Setup git
+      - name: Bump and push version
         if: inputs.upgrade != 'existing'
         run: |-
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          pnpm version ${{ inputs.upgrade }} -m "chore: release %s"
+          git push --follow-tags
 
-      - name: Bump version
-        if: inputs.upgrade != 'existing'
-        run: npm version ${{ inputs.upgrade }}
+      - run: pnpm publish
 
-      - name: Push version
-        if: inputs.upgrade != 'existing'
+      - name: Build and create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
-          git push
-          git push --tags
-
-      - run: npm publish
-
-      - name: Prepare build
-        run: npm i -g pkg
-
-      - name: Build
-        run: pkg --out-path build .
-
-      - name: Get version and package name
-        id: get_info
-        run: |-
-          version=$(node -p "require('./package.json').version")
-          echo $version
-          echo "::set-output name=version::$version"
           name=$(node -p "require('./package.json').name")
-          echo $name
-          echo "::set-output name=name::$name"
+          version=$(node -p "require('./package.json').version")
+          pnpm add --global pkg
+          pnpm build
+          pkg --out-path build dist/index.js
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.get_info.outputs.version }}
-          release_name: Release v${{ steps.get_info.outputs.version }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Linux Binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/${{ steps.get_info.outputs.name }}-linux
-          asset_name: ${{ steps.get_info.outputs.name }}-linux
-          asset_content_type: application/x-executable
-      
-      - name: Upload MacOS Binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/${{ steps.get_info.outputs.name }}-macos
-          asset_name: ${{ steps.get_info.outputs.name }}-macos
-          asset_content_type: application/x-mach-binary
-      
-      - name: Upload Windows Binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/${{ steps.get_info.outputs.name }}-win.exe
-          asset_name: ${{ steps.get_info.outputs.name }}-win.exe
-          asset_content_type: application/x-dosexec
+          gh release create "v$version" \
+            --title "Release v$version" \
+            --notes "Release v$version" \
+            "./build/$name-linux" \
+            "./build/$name-macos" \
+            "./build/$name-win.exe"

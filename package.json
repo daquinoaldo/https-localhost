@@ -2,17 +2,95 @@
   "name": "https-localhost",
   "version": "4.7.2",
   "description": "HTTPS server running on localhost",
-  "main": "index.js",
-  "scripts": {
-    "pretest": "eslint --ignore-path .gitignore .",
-    "test": "node node_modules/nyc/bin/nyc.js node_modules/mocha/bin/_mocha --exit",
-    "posttest": "node node_modules/nyc/bin/nyc.js report --reporter=lcov",
-    "preuninstall": "node certs.js -u",
-    "start": "node index.js"
+  "keywords": [
+    "SSL",
+    "https",
+    "https-server",
+    "localhost",
+    "trusted-certificate"
+  ],
+  "homepage": "https://daquinoaldo.github.io/https-localhost",
+  "bugs": {
+    "url": "https://github.com/daquinoaldo/https-localhost/issues"
+  },
+  "license": "MIT",
+  "author": "Aldo D'Aquino",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daquinoaldo/https-localhost.git"
   },
   "bin": {
-    "serve": "index.js"
+    "serve": "src/cli.ts"
   },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./certs": {
+      "types": "./src/certs.ts",
+      "import": "./src/certs.ts",
+      "default": "./src/certs.ts"
+    }
+  },
+  "publishConfig": {
+    "main": "dist/cjs/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/esm/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/esm/index.d.ts",
+        "import": "./dist/esm/index.js",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/esm/index.js"
+      },
+      "./certs": {
+        "types": "./dist/esm/certs.d.ts",
+        "import": "./dist/esm/certs.js",
+        "require": "./dist/cjs/certs.js",
+        "default": "./dist/esm/certs.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc --project tsconfig.build.esm.json && tsc --project tsconfig.build.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "lint": "oxfmt && oxlint --fix && tsc --noEmit",
+    "test": "node --test-concurrency=1 --test test/*.test.ts",
+    "prepack": "pnpm build",
+    "preuninstall": "node dist/esm/certs-cli.js -u",
+    "start": "node src/cli.ts"
+  },
+  "dependencies": {
+    "mrmime": "^2.0.1",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
+    "typescript": "^7.0.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^12.0.0"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "^24.0.0 || ^26.0.0"
+    }
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@12.3.4",
   "pkg": {
     "scripts": "*.js",
     "targets": [
@@ -20,44 +98,5 @@
       "node16-linux-x64",
       "node16-win-x64"
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/daquinoaldo/https-localhost.git"
-  },
-  "keywords": [
-    "localhost",
-    "https",
-    "http2",
-    "https-server",
-    "SSL",
-    "express",
-    "expressjs",
-    "express-js"
-  ],
-  "author": "Aldo D'Aquino",
-  "license": "AGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/daquinoaldo/https-localhost/issues"
-  },
-  "homepage": "https://daquinoaldo.github.io/https-localhost",
-  "dependencies": {
-    "appdata-path": "^1.0.0",
-    "compression": "^1.7.4",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "uglify-js": "^3.15.1",
-    "spdy": "^4.0.2"
-  },
-  "devDependencies": {
-    "eslint": "^7.25.0",
-    "eslint-config-standard": "^16.0.2",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "eslint-plugin-standard": "^5.0.0",
-    "mocha": "^8.4.0",
-    "nyc": "^15.1.0",
-    "sinon": "^10.0.0"
   }
 }
