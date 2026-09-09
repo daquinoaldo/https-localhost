@@ -21,11 +21,12 @@ describe("index (createServer)", { timeout: 300000 }, () => {
     delete process.env["PORT"]
   })
 
-  it("works as express app", async () => {
+  it("handles custom routes", async () => {
     app = createServer()
-    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
-      res.send("TEST"),
-    )
+    app.get("/test/module", (_req, res) => {
+      res.setHeader("Content-Type", "text/plain")
+      res.end("TEST")
+    })
     await app.listen(HTTPS_PORT)
 
     const res = await makeRequest("/test/module")
@@ -36,9 +37,10 @@ describe("index (createServer)", { timeout: 300000 }, () => {
     remove()
 
     app = createServer()
-    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
-      res.send("TEST"),
-    )
+    app.get("/test/module", (_req, res) => {
+      res.setHeader("Content-Type", "text/plain")
+      res.end("TEST")
+    })
     await app.listen(HTTPS_PORT)
 
     const res = await makeRequest("/test/module")
@@ -47,9 +49,10 @@ describe("index (createServer)", { timeout: 300000 }, () => {
 
   it("can be installed in custom folder", async () => {
     app = createServer({ certPath: "test/custom-folder" })
-    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
-      res.send("TEST"),
-    )
+    app.get("/test/module", (_req, res) => {
+      res.setHeader("Content-Type", "text/plain")
+      res.end("TEST")
+    })
     await app.listen(HTTPS_PORT)
 
     const res = await makeRequest("/test/module")
@@ -69,9 +72,10 @@ describe("index (createServer)", { timeout: 300000 }, () => {
 
   it("supports certPath with spaces", async () => {
     app = createServer({ certPath: "test/custom folder" })
-    app.get("/test/module", (_req: import("express").Request, res: import("express").Response) =>
-      res.send("TEST"),
-    )
+    app.get("/test/module", (_req, res) => {
+      res.setHeader("Content-Type", "text/plain")
+      res.end("TEST")
+    })
     await app.listen(HTTPS_PORT)
 
     const res = await makeRequest("/test/module")
@@ -80,15 +84,69 @@ describe("index (createServer)", { timeout: 300000 }, () => {
 
   it("serves static files from custom path", async () => {
     app = createServer()
-    app.serve("test", HTTPS_PORT)
+    app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/static.html")
-    assert.strictEqual(res.data.toString(), fs.readFileSync("test/static.html", "utf8"))
+    assert.strictEqual(res.data.toString(), fs.readFileSync("test/fixtures/static.html", "utf8"))
+    assert.match(String(res.headers["content-type"]), /^text\/html/)
+  })
+
+  it("supports conditional requests with etag", async () => {
+    app = createServer()
+    app.serve("test/fixtures", HTTPS_PORT)
+
+    const first = await makeRequest("/static.html")
+    const etag = first.headers["etag"]
+    assert.ok(etag, "expected an ETag header")
+    assert.ok(first.headers["last-modified"])
+    assert.strictEqual(first.headers["accept-ranges"], "bytes")
+
+    const cached = await makeRequest("/static.html", true, HTTPS_PORT, {
+      "if-none-match": String(etag),
+    })
+    assert.strictEqual(cached.statusCode, 304)
+    assert.strictEqual(cached.data, "")
+  })
+
+  it("supports range requests", async () => {
+    app = createServer()
+    app.serve("test/fixtures", HTTPS_PORT)
+
+    const content = fs.readFileSync("test/fixtures/static.html")
+    const res = await makeRequest("/static.html", true, HTTPS_PORT, { range: "bytes=0-3" })
+    assert.strictEqual(res.statusCode, 206)
+    assert.strictEqual(res.data.toString(), content.subarray(0, 4).toString())
+    assert.match(String(res.headers["content-range"]), /^bytes 0-3\//)
+
+    const suffix = await makeRequest("/static.html", true, HTTPS_PORT, { range: "bytes=-4" })
+    assert.strictEqual(suffix.statusCode, 206)
+    assert.strictEqual(suffix.data.toString(), content.subarray(-4).toString())
+
+    const invalid = await makeRequest("/static.html", true, HTTPS_PORT, {
+      range: "bytes=999999-",
+    })
+    assert.strictEqual(invalid.statusCode, 416)
+  })
+
+  it("redirects directory requests to a trailing slash and serves its index", async () => {
+    app = createServer()
+    app.serve("test/fixtures", HTTPS_PORT)
+
+    const res = await makeRequest("/sub")
+    assert.strictEqual(res.statusCode, 301)
+    assert.strictEqual(res.headers["location"], "/sub/")
+
+    const index = await makeRequest("/sub/")
+    assert.strictEqual(index.statusCode, 200)
+    assert.strictEqual(
+      index.data.toString(),
+      fs.readFileSync("test/fixtures/sub/index.html", "utf8"),
+    )
   })
 
   it("includes access-control-allow-origin header", async () => {
     app = createServer()
-    app.serve("test", HTTPS_PORT)
+    app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/static.html")
     assert.strictEqual(res.headers["access-control-allow-origin"], "*")
@@ -104,11 +162,11 @@ describe("index (createServer)", { timeout: 300000 }, () => {
 
   it("looks for a 404.html file", async () => {
     app = createServer()
-    app.serve("test", HTTPS_PORT)
+    app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/do-not-exist.html")
     assert.strictEqual(res.statusCode, 404)
-    assert.strictEqual(res.data.toString(), fs.readFileSync("test/404.html", "utf8"))
+    assert.strictEqual(res.data.toString(), fs.readFileSync("test/fixtures/404.html", "utf8"))
   })
 
   it("doesn't crash if the static path doesn't exist", async () => {

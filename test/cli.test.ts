@@ -7,8 +7,8 @@ describe("cli", () => {
   const cliPath = path.resolve("src/cli.ts")
 
   it("CLI flags override environment", async () => {
-    const testDir = path.resolve("test")
-    const proc = spawn("node", [cliPath, "--port", "4448", testDir], {
+    const fixtureDir = path.resolve("test/fixtures")
+    const proc = spawn("node", [cliPath, "--port", "4448", fixtureDir], {
       env: { ...process.env, PORT: "4447" },
       stdio: ["ignore", "pipe", "pipe"],
     })

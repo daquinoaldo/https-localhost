@@ -38,6 +38,7 @@ async function makeRequest(
   requestPath = "/",
   secure = true,
   port: number | string = HTTPS_PORT,
+  headers: Record<string, string> = {},
 ): Promise<{
   data: string
   statusCode?: number
@@ -51,6 +52,7 @@ async function makeRequest(
     method: "GET",
     ca: rootCA ? [rootCA] : undefined,
     agent: false,
+    headers,
   }
   const protocol = secure ? https : http
   return new Promise((resolve, reject) => {
