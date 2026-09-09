@@ -62,7 +62,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc --project tsconfig.build.esm.json && tsc --project tsconfig.build.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
     "lint": "oxfmt && oxlint --fix && tsc --noEmit",
-    "test": "node --test test/*.ts",
+    "test": "node --test-concurrency=1 --test test/*.test.ts",
     "prepack": "pnpm build",
     "preuninstall": "node dist/esm/certs-cli.js -u",
     "start": "node src/cli.ts"

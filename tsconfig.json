@@ -30,6 +30,6 @@
     "types": ["node"],
     "verbatimModuleSyntax": true
   },
-  "include": ["src/**/*", "test/*.ts", "types/*.d.ts"],
+  "include": ["src/**/*", "test/**/*", "types/*.d.ts"],
   "exclude": ["dist", "node_modules"]
 }
