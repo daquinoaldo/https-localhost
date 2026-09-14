@@ -37,7 +37,7 @@ jobs:
         run: |-
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          pnpm version ${{ inputs.upgrade }} -m "chore: release %s"
+          pnpm version ${{ inputs.upgrade }} --message "chore: release %s"
           git push --follow-tags
 
       - run: pnpm publish
@@ -50,7 +50,7 @@ jobs:
           version=$(node -p "require('./package.json').version")
           pnpm add --global pkg
           pnpm build
-          pkg --out-path build dist/index.js
+          pkg --out-path build dist/cjs/cli.js
 
           gh release create "v$version" \
             --title "Release v$version" \

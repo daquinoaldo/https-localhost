@@ -20,7 +20,7 @@
     "url": "git+https://github.com/daquinoaldo/https-localhost.git"
   },
   "bin": {
-    "serve": "src/cli.ts"
+    "serve": "dist/esm/cli.js"
   },
   "files": [
     "dist"
