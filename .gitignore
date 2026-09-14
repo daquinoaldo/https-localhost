@@ -1,10 +1,12 @@
 # MacOS
 .DS_STORE
 
-# Node, npm & CI
+# Node
 node_modules
-coverage
-.nyc_output
-
-# Build
 build
+dist
+*.tsbuildinfo
+
+# Test-generated certificate directories
+test/custom-folder/
+test/custom\ folder/
