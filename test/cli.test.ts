@@ -3,13 +3,17 @@ import { spawn } from "node:child_process"
 import path from "node:path"
 import { describe, it } from "node:test"
 
-describe("cli", () => {
+import { currentEnv } from "./helpers.ts"
+
+void describe("cli", () => {
   const cliPath = path.resolve("src/cli.ts")
 
-  it("CLI flags override environment", async () => {
+  void it("CLI flags override environment", async () => {
     const fixtureDir = path.resolve("test/fixtures")
+    const env = currentEnv()
+    env["PORT"] = "4447"
     const proc = spawn("node", [cliPath, "--port", "4448", fixtureDir], {
-      env: { ...process.env, PORT: "4447" },
+      env,
       stdio: ["ignore", "pipe", "pipe"],
     })
 
@@ -29,9 +33,9 @@ describe("cli", () => {
     }
   })
 
-  it("prints help when --help is passed", async () => {
+  void it("prints help when --help is passed", async () => {
     const proc = spawn("node", [cliPath, "--help"], {
-      env: { ...process.env },
+      env: currentEnv(),
       stdio: ["ignore", "pipe", "pipe"],
     })
 

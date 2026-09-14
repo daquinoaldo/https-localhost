@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { execFile } from "node:child_process"
 import fs from "node:fs"
 import https from "node:https"
@@ -11,9 +9,17 @@ const MKCERT_VERSION = "v1.4.4"
 const DEFAULT_CERT_PATH = getAppDataPath("https-localhost")
 const DEFAULT_DOMAIN = "localhost"
 
-type CertificatePair = {
+export type CertificatePair = {
   key: Buffer
   cert: Buffer
+}
+
+function isRelease(v: unknown): v is { tag_name: string } {
+  return typeof v === "object" && v !== null && "tag_name" in v
+}
+
+function isVersioned(v: unknown): v is { version?: string } {
+  return typeof v === "object" && v !== null
 }
 
 function checkUpdates(): void {
@@ -27,16 +33,19 @@ function checkUpdates(): void {
     https
       .request(options, res => {
         let body = ""
-        res.on("data", chunk => {
+        res.on("data", (chunk: Buffer) => {
           body += chunk.toString("utf8")
         })
         res.on("end", () => {
-          const currentVersion = JSON.parse(
+          const currentVersion: unknown = JSON.parse(
             fs.readFileSync(path.resolve(__dirname, "../package.json"), "utf8"),
-          ).version
-          const latestVersion = JSON.parse(body).tag_name.replace("v", "")
-          if (currentVersion !== latestVersion)
+          )
+          const latestVersion: unknown = JSON.parse(body)
+          if (!isRelease(latestVersion)) return
+          const current = isVersioned(currentVersion) ? (currentVersion.version ?? "") : ""
+          if (current !== latestVersion.tag_name.replace("v", "")) {
             console.warn("[https-localhost] New update available.")
+          }
         })
       })
       .end()
@@ -49,15 +58,16 @@ function checkUpdates(): void {
 function getExe(): string {
   switch (process.platform) {
     case "darwin":
-      return "mkcert-" + MKCERT_VERSION + "-darwin-amd64"
+      return `mkcert-${MKCERT_VERSION}-darwin-amd64`
     case "linux":
-      if (process.arch === "arm" || process.arch === "arm64")
-        return "mkcert-" + MKCERT_VERSION + "-linux-arm"
-      return "mkcert-" + MKCERT_VERSION + "-linux-amd64"
+      if (process.arch === "arm" || process.arch === "arm64") {
+        return `mkcert-${MKCERT_VERSION}-linux-arm`
+      }
+      return `mkcert-${MKCERT_VERSION}-linux-amd64`
     case "win32":
-      return "mkcert-" + MKCERT_VERSION + "-windows-amd64.exe"
+      return `mkcert-${MKCERT_VERSION}-windows-amd64.exe`
     default:
-      console.warn(
+      console.error(
         "Cannot generate the localhost certificate on your " +
           "platform. Please, consider contacting the developer if you can help.",
       )
@@ -65,22 +75,22 @@ function getExe(): string {
   }
 }
 
-function download(url: string, destination: string): Promise<void> {
+async function download(url: string, destination: string): Promise<void> {
   console.log("Downloading the mkcert executable...")
   const file = fs.createWriteStream(destination)
   return new Promise((resolve, reject) => {
     function get(currentUrl: string): void {
       https
         .get(currentUrl, response => {
-          if (response.statusCode === 302 && response.headers.location) {
+          if (response.statusCode === 302 && response.headers.location !== undefined) {
             get(response.headers.location)
             return
           }
           response.pipe(file)
           file.on("finish", () => {
             file.close(err => {
-              if (err) reject(err)
-              else resolve()
+              if (err === undefined || err === null) resolve()
+              else reject(new Error("Failed to close the certificate file", { cause: err }))
             })
           })
           file.on("error", reject)
@@ -101,8 +111,8 @@ async function runMkcert({
   domain: string
 }): Promise<void> {
   const exePath = path.join(appDataPath, exe)
-  const crtPath = path.join(appDataPath, domain + ".crt")
-  const keyPath = path.join(appDataPath, domain + ".key")
+  const crtPath = path.join(appDataPath, `${domain}.crt`)
+  const keyPath = path.join(appDataPath, `${domain}.key`)
   const args = ["-install", "-cert-file", crtPath, "-key-file", keyPath, domain]
 
   if (process.platform === "win32") await new Promise(resolve => setTimeout(resolve, 3000))
@@ -110,11 +120,11 @@ async function runMkcert({
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
     execFile(exePath, args, (error, stdout, stderr) => {
-      if (stdout) console.log(stdout)
-      if (stderr) console.error(stderr)
-      if (error) {
+      if (stdout.length > 0) console.log(stdout)
+      if (stderr.length > 0) console.error(stderr)
+      if (error !== null) {
         console.error(error)
-        reject(error)
+        reject(new Error(`mkcert failed: ${error.message}`))
         return
       }
       resolve()
@@ -122,7 +132,7 @@ async function runMkcert({
   })
 }
 
-async function generate({
+export async function generate({
   appDataPath = DEFAULT_CERT_PATH,
   domain = DEFAULT_DOMAIN,
 }: {
@@ -130,9 +140,9 @@ async function generate({
   domain?: string
 } = {}): Promise<void> {
   console.info("Generating certificates...")
-  console.log("Certificates path: " + appDataPath + ". Never modify nor share this files.")
+  console.log(`Certificates path: ${appDataPath}. Never modify nor share this files.`)
   if (!fs.existsSync(appDataPath)) fs.mkdirSync(appDataPath, { recursive: true })
-  const url = "https://github.com/FiloSottile/mkcert/releases/download/" + MKCERT_VERSION + "/"
+  const url = `https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/`
   const exe = getExe()
   const exePath = path.join(appDataPath, exe)
   if (!fs.existsSync(exePath)) {
@@ -143,7 +153,7 @@ async function generate({
   console.log("Certificates generated, installed and trusted. Ready to go!")
 }
 
-async function getCerts({
+export async function getCerts({
   domain = DEFAULT_DOMAIN,
   certPath = DEFAULT_CERT_PATH,
   reinstall = false,
@@ -152,47 +162,32 @@ async function getCerts({
   certPath?: string
   reinstall?: boolean
 } = {}): Promise<CertificatePair> {
-  if ((process as NodeJS.Process & { pkg?: boolean }).pkg) checkUpdates()
+  if ((process as NodeJS.Process & { pkg?: boolean }).pkg === true) checkUpdates()
   if (reinstall || !fs.existsSync(path.join(certPath, getExe())))
     await generate({ appDataPath: certPath, domain })
   try {
     return {
-      key: fs.readFileSync(path.join(certPath, domain + ".key")),
-      cert: fs.readFileSync(path.join(certPath, domain + ".crt")),
+      key: fs.readFileSync(path.join(certPath, `${domain}.key`)),
+      cert: fs.readFileSync(path.join(certPath, `${domain}.crt`)),
     }
   } catch {
     if (certPath !== DEFAULT_CERT_PATH) {
       console.error(
-        "Cannot find localhost.key and localhost.crt in the specified path: " + certPath,
+        `Cannot find localhost.key and localhost.crt in the specified path: ${certPath}`,
       )
-      throw new Error("Certificates are missing from the specified path: " + certPath)
+      throw new Error(`Certificates are missing from the specified path: ${certPath}`)
     }
     await generate({ appDataPath: DEFAULT_CERT_PATH, domain })
     return {
-      key: fs.readFileSync(path.join(DEFAULT_CERT_PATH, domain + ".key")),
-      cert: fs.readFileSync(path.join(DEFAULT_CERT_PATH, domain + ".crt")),
+      key: fs.readFileSync(path.join(DEFAULT_CERT_PATH, `${domain}.key`)),
+      cert: fs.readFileSync(path.join(DEFAULT_CERT_PATH, `${domain}.crt`)),
     }
   }
 }
 
-function remove(appDataPath = DEFAULT_CERT_PATH): void {
+export function remove(appDataPath: string = DEFAULT_CERT_PATH): void {
   if (fs.existsSync(appDataPath)) {
     fs.readdirSync(appDataPath).forEach(file => fs.unlinkSync(path.join(appDataPath, file)))
     fs.rmdirSync(appDataPath)
   }
 }
-
-if (process.argv[1]?.endsWith("/src/certs.ts") || process.argv[1]?.endsWith("/certs.js")) {
-  if (
-    process.argv.length === 3 &&
-    (process.argv[2] === "-u" || process.argv[2] === "--uninstall")
-  ) {
-    remove()
-    console.info("Certificates removed.")
-  } else {
-    generate().catch(error => console.error("\nExec error: " + error))
-  }
-}
-
-export type { CertificatePair }
-export { generate, getCerts, remove }

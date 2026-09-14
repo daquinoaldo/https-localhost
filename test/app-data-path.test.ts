@@ -5,7 +5,7 @@ import { afterEach, describe, it } from "node:test"
 
 import { getAppDataPath } from "../src/app-data-path.ts"
 
-describe("app-data-path", () => {
+void describe("app-data-path", () => {
   const originalAppData = process.env["APPDATA"]
 
   afterEach(() => {
@@ -16,13 +16,13 @@ describe("app-data-path", () => {
     }
   })
 
-  it("returns base directory when no app name is supplied", () => {
+  void it("returns base directory when no app name is supplied", () => {
     delete process.env["APPDATA"]
     const basePath = getAppDataPath()
     assert.ok(typeof basePath === "string" && basePath.length > 0)
   })
 
-  it("resolves app directory under platform base path", () => {
+  void it("resolves app directory under platform base path", () => {
     delete process.env["APPDATA"]
     const appPath = getAppDataPath("https-localhost")
     const home = os.homedir()
@@ -42,7 +42,7 @@ describe("app-data-path", () => {
     }
   })
 
-  it("prefers APPDATA environment variable when defined", () => {
+  void it("prefers APPDATA environment variable when defined", () => {
     process.env["APPDATA"] = "/tmp/custom-app-data"
     assert.strictEqual(getAppDataPath(), "/tmp/custom-app-data")
     assert.strictEqual(

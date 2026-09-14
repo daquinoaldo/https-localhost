@@ -11,10 +11,17 @@ export const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>
 
-export const getEnv = (overrides: Record<string, unknown> = {}): Env => {
-  const merged: Record<string, unknown> = { ...process.env }
+export function getEnv(overrides: Record<string, unknown> = {}): Env {
+  const merged: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined) {
+      merged[key] = value
+    }
+  }
   for (const [key, value] of Object.entries(overrides)) {
-    if (value !== undefined) merged[key] = value
+    if (value !== undefined) {
+      merged[key] = value
+    }
   }
   return envSchema.parse(merged)
 }

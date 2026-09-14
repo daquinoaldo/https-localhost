@@ -1,7 +1,7 @@
 import os from "node:os"
 import path from "node:path"
 
-function getAppDataPath(app?: string): string {
+export function getAppDataPath(app?: string): string {
   const home = os.homedir()
   let appDataPath = process.env["APPDATA"]
 
@@ -21,5 +21,3 @@ function getAppDataPath(app?: string): string {
   if (app === undefined) return appDataPath
   return path.join(appDataPath, appDataPath === home ? `.${app}` : app)
 }
-
-export { getAppDataPath }

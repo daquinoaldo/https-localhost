@@ -1,11 +1,10 @@
-#!/usr/bin/env node
-
 import http from "node:http"
 import type { Server } from "node:http"
 import https from "node:https"
 
 import { getCerts } from "./certs.ts"
-import { createRouter, type RouteHandler } from "./router.ts"
+import { createRouter } from "./router.ts"
+import type { RouteHandler } from "./router.ts"
 import { createStaticHandler } from "./static.ts"
 
 export type HttpsLocalhostApp = {
@@ -32,29 +31,30 @@ export function createServer({
     get(route, handler) {
       router.get(route, handler)
     },
-    listen: async function (port = 443) {
+    async listen(port = 443) {
       app.server = https
         .createServer(await getCerts({ domain, certPath, reinstall }), router.handleRequest)
         .listen(port)
-      console.info("Server running on port " + port + ".")
+      console.info(`Server running on port ${port}.`)
       return app.server
     },
-    redirect: function (httpPort = 80, httpsPort = 443) {
+    redirect(httpPort = 80, httpsPort = 443) {
       app.http = http
         .createServer((req, res) => {
-          const reqHost = req.headers.host ? req.headers.host.replace(":" + httpPort, "") : domain
+          const reqHost = req.headers.host ?? domain
           res.writeHead(301, {
-            Location:
-              "https://" + reqHost + (httpsPort !== 443 ? ":" + httpsPort : "") + (req.url || ""),
+            Location: `https://${reqHost.replace(`:${httpPort}`, "")}${
+              httpsPort !== 443 ? `:${httpsPort}` : ""
+            }${req.url ?? ""}`,
           })
           res.end()
         })
         .listen(httpPort)
       console.info("http to https redirection active.")
     },
-    serve: function (staticPath = process.cwd(), port = 443) {
+    serve(staticPath = process.cwd(), port = 443) {
       router.setStaticHandler(createStaticHandler(staticPath))
-      console.info("Serving static path: " + staticPath)
+      console.info(`Serving static path: ${staticPath}`)
       void app.listen(port)
     },
   }
@@ -62,4 +62,4 @@ export function createServer({
   return app
 }
 
-export default createServer
+export { createServer as default }

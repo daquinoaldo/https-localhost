@@ -17,7 +17,7 @@ const parsedArgs = parseArgs({
   },
 })
 
-if (parsedArgs.values.help) {
+if (parsedArgs.values.help === true) {
   console.log(`
 Usage: serve [options] [path]
 
@@ -31,7 +31,7 @@ Options:
   process.exit(0)
 }
 
-const staticFolder = parsedArgs.positionals[0] || process.cwd()
+const staticFolder = parsedArgs.positionals[0] ?? process.cwd()
 
 const { port, host, "cert-path": certPath, reinstall } = parsedArgs.values
 
@@ -67,7 +67,9 @@ process.on("uncaughtException", err => {
       )
       break
     default:
-      console.error("Unexpected error " + error.code + ":\n\n" + err)
+      console.error(
+        `Unexpected error ${error.code}:\n\n${err instanceof Error ? err.message : String(err)}`,
+      )
       break
   }
   process.exit(1)

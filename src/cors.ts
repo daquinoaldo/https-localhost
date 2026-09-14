@@ -7,7 +7,7 @@ const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Max-Age": "86400",
 }
 
-function applyCors(req: IncomingMessage, res: ServerResponse): boolean {
+export function applyCors(req: IncomingMessage, res: ServerResponse): boolean {
   for (const [header, value] of Object.entries(CORS_HEADERS)) {
     res.setHeader(header, value)
   }
@@ -16,5 +16,3 @@ function applyCors(req: IncomingMessage, res: ServerResponse): boolean {
   res.end()
   return true
 }
-
-export { applyCors }
