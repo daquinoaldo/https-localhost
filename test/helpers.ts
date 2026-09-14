@@ -18,7 +18,7 @@ export function currentEnv(): NodeJS.ProcessEnv {
   return env
 }
 
-function getRootCA(): Buffer | undefined {
+export function getRootCA(): Buffer | undefined {
   try {
     const certDir = getAppDataPath("https-localhost")
     const files = fs.readdirSync(certDir)

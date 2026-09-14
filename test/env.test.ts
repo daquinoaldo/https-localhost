@@ -48,4 +48,20 @@ void describe("env", () => {
     assert.throws(() => envSchema.parse({ PORT: 0 }))
     assert.throws(() => envSchema.parse({ PORT: 70000 }))
   })
+
+  void it("rejects invalid proxy targets", () => {
+    assert.throws(() => envSchema.parse({ PROXY_TARGET: "not-a-url" }))
+    assert.throws(() => envSchema.parse({ PROXY_TARGET: "ftp://localhost:3000" }))
+  })
+
+  void it("accepts http and https proxy targets", () => {
+    assert.strictEqual(
+      envSchema.parse({ PROXY_TARGET: "http://localhost:3000" }).PROXY_TARGET,
+      "http://localhost:3000",
+    )
+    assert.strictEqual(
+      envSchema.parse({ PROXY_TARGET: "https://example.com" }).PROXY_TARGET,
+      "https://example.com",
+    )
+  })
 })

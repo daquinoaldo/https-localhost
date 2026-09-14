@@ -21,42 +21,22 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
     delete process.env["PORT"]
   })
 
-  void it("handles custom routes", async () => {
-    app = createServer()
-    app.get("/test/module", (_req, res) => {
-      res.setHeader("Content-Type", "text/plain")
-      res.end("TEST")
-    })
-    await app.listen(HTTPS_PORT)
-
-    const res = await makeRequest("/test/module")
-    assert.strictEqual(res.data, "TEST")
-  })
-
   void it("can install certs at first run", async () => {
     remove()
 
     app = createServer()
-    app.get("/test/module", (_req, res) => {
-      res.setHeader("Content-Type", "text/plain")
-      res.end("TEST")
-    })
-    await app.listen(HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
-    const res = await makeRequest("/test/module")
-    assert.strictEqual(res.data, "TEST")
+    const res = await makeRequest("/static.html", true, HTTPS_PORT)
+    assert.strictEqual(res.statusCode, 200)
   })
 
   void it("can be installed in custom folder", async () => {
     app = createServer({ certPath: "test/custom-folder" })
-    app.get("/test/module", (_req, res) => {
-      res.setHeader("Content-Type", "text/plain")
-      res.end("TEST")
-    })
-    await app.listen(HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
-    const res = await makeRequest("/test/module")
-    assert.strictEqual(res.data, "TEST")
+    const res = await makeRequest("/static.html", true, HTTPS_PORT)
+    assert.strictEqual(res.statusCode, 200)
   })
 
   void it("crashes if certs are missing in custom folder", async () => {
@@ -72,19 +52,15 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("supports certPath with spaces", async () => {
     app = createServer({ certPath: "test/custom folder" })
-    app.get("/test/module", (_req, res) => {
-      res.setHeader("Content-Type", "text/plain")
-      res.end("TEST")
-    })
-    await app.listen(HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
-    const res = await makeRequest("/test/module")
-    assert.strictEqual(res.data, "TEST")
+    const res = await makeRequest("/static.html", true, HTTPS_PORT)
+    assert.strictEqual(res.statusCode, 200)
   })
 
   void it("serves static files from custom path", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/static.html")
     assert.strictEqual(res.data.toString(), fs.readFileSync("test/fixtures/static.html", "utf8"))
@@ -93,7 +69,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("supports conditional requests with etag", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     const first = await makeRequest("/static.html")
     const { etag, "last-modified": lastModified } = first.headers
@@ -110,7 +86,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("supports range requests", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     const content = fs.readFileSync("test/fixtures/static.html")
     const res = await makeRequest("/static.html", true, HTTPS_PORT, { range: "bytes=0-3" })
@@ -130,7 +106,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("redirects directory requests to a trailing slash and serves its index", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/sub")
     assert.strictEqual(res.statusCode, 301)
@@ -146,7 +122,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("keeps the query string when redirecting to a trailing slash", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/sub?a=1")
     assert.strictEqual(res.statusCode, 301)
@@ -155,7 +131,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("rejects protocol-relative and absolute request targets", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     for (const target of ["//evil.com/", "//evil.com", "http://evil.com/", "https://evil.com"]) {
       const res = await makeRequest(target)
@@ -165,7 +141,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("includes access-control-allow-origin header", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/static.html")
     assert.strictEqual(res.headers["access-control-allow-origin"], "*")
@@ -173,7 +149,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("doesn't crash on 404", async () => {
     app = createServer()
-    app.serve(undefined, HTTPS_PORT)
+    await app.serve(undefined, HTTPS_PORT)
 
     const res = await makeRequest("/do-not-exist")
     assert.strictEqual(res.statusCode, 404)
@@ -181,7 +157,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("looks for a 404.html file", async () => {
     app = createServer()
-    app.serve("test/fixtures", HTTPS_PORT)
+    await app.serve("test/fixtures", HTTPS_PORT)
 
     const res = await makeRequest("/do-not-exist.html")
     assert.strictEqual(res.statusCode, 404)
@@ -190,7 +166,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("doesn't crash if the static path doesn't exist", async () => {
     app = createServer()
-    app.serve("does-not-exist", HTTPS_PORT)
+    await app.serve("does-not-exist", HTTPS_PORT)
 
     const res = await makeRequest("/")
     assert.strictEqual(res.statusCode, 404)
@@ -198,7 +174,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("redirects http to https with default host", async () => {
     app = createServer()
-    app.redirect(HTTP_PORT)
+    await app.redirect(HTTP_PORT)
 
     const res = await makeRequest("/", false, HTTP_PORT)
     assert.strictEqual(res.statusCode, 301)
@@ -207,7 +183,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
   void it("redirects http to https with custom ports", async () => {
     app = createServer()
-    app.redirect(HTTP_PORT, HTTPS_PORT)
+    await app.redirect(HTTP_PORT, HTTPS_PORT)
 
     const res = await makeRequest("/", false, HTTP_PORT)
     assert.strictEqual(res.statusCode, 301)

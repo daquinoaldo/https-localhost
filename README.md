@@ -1,6 +1,6 @@
 # HTTPS server running on localhost
 
-Run a server on localhost with a locally-trusted SSL certificate. Serve static files, define your own routes, or import it as a module in your project.
+Run a server on localhost with a locally-trusted SSL certificate. Serve static files, proxy an existing server, define your own routes, or import it as a module in your project.
 
 The certificate is provided by [mkcert](https://github.com/FiloSottile/mkcert). It automatically creates and installs a local CA in the system and browser root stores, and uses it to generate certificates that your machine trusts. **These are not valid certificates, they are for development only, and will only work in your machine.**
 
@@ -25,6 +25,7 @@ Usage notes:
   - `-H, --host <host>`: domain for the certificate (`HOST`)
   - `--cert-path <path>`: custom certificate directory (`CERT_PATH`)
   - `--reinstall`: force certificate re-generation (`REINSTALL=true`)
+  - `--proxy <url>`: proxy all requests to the given http(s) URL (`PROXY_TARGET`)
 - Specifying a port number prevents HTTP to HTTPS redirect.
 
 ### Standalone binaries
@@ -39,7 +40,7 @@ Install as a dependency:
 npm i -D https-localhost
 ```
 
-Then put in your `index.js` file:
+Then use it to serve static files or proxy an existing server.
 
 ```js
 import { createServer } from "https-localhost"
@@ -47,21 +48,18 @@ import { createServer } from "https-localhost"
 // const { createServer } = require("https-localhost")
 
 const app = createServer()
-app.listen()     // optionally, specify a port
-app.redirect()   // enable http to https
-app.serve(path)  // serve static files
+await app.redirect() // enable http -> https
+await app.serve(path) // serve static files
 
-// optionally, define your own routes (GET only)
-app.get("/api/hello", (req, res) => res.end("Hello, world!"))
+// or, instead of serve, proxy an existing server:
+await app.proxy("http://localhost:3000")
 ```
 
 Alternatively, you can use the certificates in your own server:
 
 ```js
 import https from "node:https"
-import { getCerts } from "https-localhost/certs"
-// or, in CommonJS:
-// const { getCerts } = require("https-localhost/certs")
+import { getCerts } from "https-localhost/certs" // or: const { getCerts } = require("https-localhost/certs")
 
 const certs = await getCerts()
 

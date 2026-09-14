@@ -33,6 +33,25 @@ void describe("cli", () => {
     }
   })
 
+  void it("exits with an error when --proxy and a path are both passed", async () => {
+    const proc = spawn("node", [cliPath, "--proxy", "http://localhost:3000", "some-path"], {
+      env: currentEnv(),
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+
+    let stderr = ""
+    const [code] = await new Promise<[number | null]>((resolve, reject) => {
+      proc.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString()
+      })
+      proc.on("close", code => resolve([code]))
+      proc.on("error", reject)
+    })
+
+    assert.strictEqual(code, 1)
+    assert.ok(stderr.includes("mutually exclusive"))
+  })
+
   void it("prints help when --help is passed", async () => {
     const proc = spawn("node", [cliPath, "--help"], {
       env: currentEnv(),

@@ -13,6 +13,7 @@ const parsedArgs = parseArgs({
     host: { type: "string", short: "H" },
     "cert-path": { type: "string" },
     reinstall: { type: "boolean" },
+    proxy: { type: "string" },
     help: { type: "boolean", short: "h" },
   },
 })
@@ -26,6 +27,7 @@ Options:
   -H, --host <host>        Host/domain for SSL cert (default: localhost or HOST env)
       --cert-path <path>   Directory to store/find certificates (default: CERT_PATH env)
       --reinstall          Force reinstall of certificates (default: REINSTALL env)
+      --proxy <url>        Proxy requests to the given http(s) URL (default: PROXY_TARGET env)
   -h, --help               Display help
 `)
   process.exit(0)
@@ -33,13 +35,19 @@ Options:
 
 const staticFolder = parsedArgs.positionals[0] ?? process.cwd()
 
-const { port, host, "cert-path": certPath, reinstall } = parsedArgs.values
+const { port, host, "cert-path": certPath, reinstall, proxy } = parsedArgs.values
+
+if (proxy !== undefined && parsedArgs.positionals.length > 0) {
+  console.error("Error: --proxy and a static path are mutually exclusive.")
+  process.exit(1)
+}
 
 const env = getEnv({
   PORT: port,
   HOST: host,
   CERT_PATH: certPath,
   REINSTALL: reinstall,
+  PROXY_TARGET: proxy,
 })
 
 const app = createServer({
@@ -47,7 +55,8 @@ const app = createServer({
   certPath: env.CERT_PATH,
   reinstall: env.REINSTALL,
 })
-app.serve(staticFolder, env.PORT)
+if (env.PROXY_TARGET !== undefined) app.proxy(env.PROXY_TARGET, env.PORT)
+else app.serve(staticFolder, env.PORT)
 if (env.PORT === 443) app.redirect()
 
 process.on("uncaughtException", err => {

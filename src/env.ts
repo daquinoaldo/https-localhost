@@ -7,6 +7,12 @@ export const envSchema = z.object({
   REINSTALL: z
     .union([z.boolean(), z.string().transform(v => v === "true" || v === "1")])
     .default(false),
+  PROXY_TARGET: z
+    .url()
+    .refine(v => v.startsWith("http:") || v.startsWith("https:"), {
+      message: "PROXY_TARGET must be an http or https URL",
+    })
+    .optional(),
 })
 
 export type Env = z.infer<typeof envSchema>
