@@ -1,8 +1,8 @@
 # HTTPS server running on localhost
 
-Run a server on localhost with a locally-trusted SSL certificate. Serve static files, proxies an existing server, or you can import as module in your project.
+Run a server on localhost with a locally-trusted SSL certificate. Serve static files, define your own routes, or import it as a module in your project.
 
-The certificate is provided by [mkcert](https://github.com/FiloSottile/mkcert). It automatically creates and installs a local CA in the system and browsers root store, and use it to generate certificates that your machine trust. **This are not valid certificates, are for development only, and will only work in your machine.**
+The certificate is provided by [mkcert](https://github.com/FiloSottile/mkcert). It automatically creates and installs a local CA in the system and browser root stores, and uses it to generate certificates that your machine trusts. **These are not valid certificates, they are for development only, and will only work in your machine.**
 
 Certificates support macOS, Linux and Windows. [The full list of supported root stores is available in the original repo](https://github.com/FiloSottile/mkcert/blob/v1.4.4/README.md#supported-root-stores).
 
@@ -10,13 +10,13 @@ Certificates support macOS, Linux and Windows. [The full list of supported root 
 
 ```sh
 # install
-npm i -g --only=prod https-localhost
+npm i -g https-localhost
 
 # run
 serve ~/myproj
 ```
 
-How it works:
+Usage notes:
 
 - `sudo` may be necessary.
 - If a static path is not provided the current directory content will be served.
@@ -26,6 +26,8 @@ How it works:
   - `--cert-path <path>`: custom certificate directory (`CERT_PATH`)
   - `--reinstall`: force certificate re-generation (`REINSTALL=true`)
 - Specifying a port number prevents HTTP to HTTPS redirect.
+
+### Standalone binaries
 
 If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
 
@@ -40,22 +42,39 @@ npm i -D https-localhost
 Then put in your `index.js` file:
 
 ```js
-const app = require("https-localhost")()
+import { createServer } from "https-localhost"
+// or, in CommonJS:
+// const { createServer } = require("https-localhost")
 
-app.listen()
-app.redirect()
-app.serve(path)
+const app = createServer()
+app.listen()     // optionally, specify a port
+app.redirect()   // enable http to https
+app.serve(path)  // serve static files
 
-// or get the certificates and use them in your own server
-const { getCerts } = require("https-localhost/certs")
-const certs = await getCerts()
+// optionally, define your own routes (GET only)
+app.get("/api/hello", (req, res) => res.end("Hello, world!"))
 ```
+
+Alternatively, you can use the certificates in your own server:
+
+```js
+import https from "node:https"
+import { getCerts } from "https-localhost/certs"
+// or, in CommonJS:
+// const { getCerts } = require("https-localhost/certs")
+
+const certs = await getCerts()
+
+https.createServer(certs, (_, res) => res.end("Hello, world!")).listen(443)
+```
+
+Uninstalling the npm package removes the generated certificates automatically.
 
 ## Troubleshooting
 
 ### root required
 
-- **At first run** this tool generate a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/diractory/containing/certificates/ serve ~/myproj`.
+- **At first run** this tool generates a trusted certificate. The sudo password may be required. If you cannot provide the sudo password generate a `localhost.key` and `localhost.crt` and specify its path with `CERT_PATH=/directory/containing/certificates/ serve ~/myproj`.
 - **At each run** the password may be required to run the server on port 443 and 80. To avoid the script ask for password specify a different port number: `PORT=4433 serve ~/myproj`.
 
 ### EACCES
@@ -72,4 +91,4 @@ And in general all the cases when the script runs but the connection is marked a
 
 Force a reinstall of the certificate with `REINSTALL=true serve`. `sudo` may be required on linux and MacOS.
 
-If the problem is solved you should be able to use https-localhost also as module.
+If the problem is solved you should be able to use https-localhost as a module too.
