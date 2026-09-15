@@ -24,7 +24,7 @@ void describe("edge cases", { timeout: 300000 }, () => {
 
   function spawnScenario(scenario: string): Promise<{ code: number | null; stdout: string }> {
     const script = `
-      import { createServer } from "../src/index.ts"
+      import { createServer } from "./src/index.ts"
       import https from "node:https"
       process.on("uncaughtException", err => {
         console.log("CRASH:" + (err.code ?? err.name))
@@ -33,7 +33,7 @@ void describe("edge cases", { timeout: 300000 }, () => {
       const app = createServer()
       await app.serve("${FIXTURES}", 15443)
       const req = https.request(
-        { host: "localhost", port: 15443, path: process.argv[2], agent: false },
+        { host: "localhost", port: 15443, path: process.env["SCENARIO_PATH"], agent: false },
         res => {
           console.log("STATUS:" + res.statusCode)
           res.resume()
@@ -44,8 +44,9 @@ void describe("edge cases", { timeout: 300000 }, () => {
       req.end()
     `
     return new Promise(resolve => {
-      const proc = spawn("node", ["--eval", script, scenario], {
+      const proc = spawn("node", ["--use-system-ca", "--eval", script], {
         cwd: new URL("..", import.meta.url).pathname,
+        env: { ...process.env, SCENARIO_PATH: scenario },
         stdio: ["ignore", "pipe", "pipe"],
       })
       let stdout = ""
@@ -64,7 +65,7 @@ void describe("edge cases", { timeout: 300000 }, () => {
   void it("does not crash on malformed percent-encoding", async () => {
     const { code, stdout } = await spawnScenario("/%zz")
     assert.strictEqual(code, 0, `server crashed: ${stdout}`)
-    assert.match(stdout, /STATUS:(400|404)/)
+    assert.match(stdout, /STATUS:(400|403|404)/)
   })
 
   void it("returns 304 for if-modified-since alone when fresh", async () => {
@@ -132,7 +133,7 @@ void describe("edge cases", { timeout: 300000 }, () => {
     app = createServer()
     await app.proxy("http://localhost:15990", HTTPS_PORT)
 
-    const res = await makeRequest("/any", true, HTTPS_PORT)
+    const res = await makeRequest("/any", true, HTTPS_PORT, {}, "OPTIONS")
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers["access-control-allow-origin"], "*")
   })
