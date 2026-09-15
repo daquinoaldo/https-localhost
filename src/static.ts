@@ -16,7 +16,12 @@ function mime(filePath: string): string {
 
 function sanitize(staticPath: string, urlPath: string): string | null {
   const base = path.resolve(staticPath)
-  const decoded = decodeURIComponent(urlPath.split("?")[0]?.split("#")[0] ?? "/")
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(urlPath.split("?")[0]?.split("#")[0] ?? "/")
+  } catch {
+    return null
+  }
   const resolved = path.resolve(base, `.${path.posix.normalize(`/${decoded}`)}`)
   if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) return null
   return resolved
