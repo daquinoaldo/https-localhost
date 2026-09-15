@@ -150,6 +150,12 @@ export function createStaticHandler(staticPath: string): RequestListener {
       serve404(staticPath, req, res)
       return
     }
+    try {
+      fs.statSync(target)
+    } catch {
+      serve404(staticPath, req, res)
+      return
+    }
     let range: { start: number; end: number } | null = null
     const rangeHeader = req.headers.range
     if (rangeHeader !== undefined) {
