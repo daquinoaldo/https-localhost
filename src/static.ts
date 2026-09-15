@@ -77,14 +77,12 @@ function serveFile(
     return
   }
   const ifModifiedSince = req.headers["if-modified-since"]
-  if (
-    ifNoneMatch !== undefined &&
-    ifModifiedSince !== undefined &&
-    stat.mtime <= new Date(ifModifiedSince)
-  ) {
-    res.writeHead(304)
-    res.end()
-    return
+  if (ifModifiedSince !== undefined && !Number.isNaN(new Date(ifModifiedSince).getTime())) {
+    if (stat.mtime <= new Date(ifModifiedSince)) {
+      res.writeHead(304)
+      res.end()
+      return
+    }
   }
 
   const { size } = stat
