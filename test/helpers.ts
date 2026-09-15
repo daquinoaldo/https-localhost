@@ -47,6 +47,7 @@ export async function makeRequest(
   secure = true,
   port: number | string = HTTPS_PORT,
   headers: Record<string, string> = {},
+  method = "GET",
 ): Promise<{
   data: string
   statusCode?: number
@@ -57,7 +58,7 @@ export async function makeRequest(
     host: "localhost",
     port,
     path: requestPath,
-    method: "GET",
+    method,
     ca: rootCA !== undefined ? [rootCA] : undefined,
     agent: false,
     headers,
