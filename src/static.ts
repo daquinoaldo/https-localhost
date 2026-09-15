@@ -28,7 +28,8 @@ function sanitize(staticPath: string, urlPath: string): string | null {
 }
 
 function parseRange(header: string, size: number): { start: number; end: number } | null {
-  const match = /^bytes=(\d*)-(\d*)$/u.exec(header.trim())
+  const firstRange = header.trim().split(",", 1)[0]
+  const match = /^bytes=(\d*)-(\d*)$/u.exec(firstRange ?? "")
   if (match === null || (match[1] === "" && match[2] === "")) return null
   if (match[1] === "") {
     const n = Number(match[2])
