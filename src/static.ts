@@ -16,14 +16,20 @@ function mime(filePath: string): string {
 
 function sanitize(staticPath: string, urlPath: string): string | null {
   const base = path.resolve(staticPath)
-  const decoded = decodeURIComponent(urlPath.split("?")[0]?.split("#")[0] ?? "/")
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(urlPath.split("?")[0]?.split("#")[0] ?? "/")
+  } catch {
+    return null
+  }
   const resolved = path.resolve(base, `.${path.posix.normalize(`/${decoded}`)}`)
   if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) return null
   return resolved
 }
 
 function parseRange(header: string, size: number): { start: number; end: number } | null {
-  const match = /^bytes=(\d*)-(\d*)$/u.exec(header.trim())
+  const firstRange = header.trim().split(",", 1)[0]
+  const match = /^bytes=(\d*)-(\d*)$/u.exec(firstRange ?? "")
   if (match === null || (match[1] === "" && match[2] === "")) return null
   if (match[1] === "") {
     const n = Number(match[2])
@@ -72,14 +78,12 @@ function serveFile(
     return
   }
   const ifModifiedSince = req.headers["if-modified-since"]
-  if (
-    ifNoneMatch !== undefined &&
-    ifModifiedSince !== undefined &&
-    stat.mtime <= new Date(ifModifiedSince)
-  ) {
-    res.writeHead(304)
-    res.end()
-    return
+  if (ifModifiedSince !== undefined && !Number.isNaN(new Date(ifModifiedSince).getTime())) {
+    if (stat.mtime <= new Date(ifModifiedSince)) {
+      res.writeHead(304)
+      res.end()
+      return
+    }
   }
 
   const { size } = stat
@@ -110,21 +114,24 @@ export function createStaticHandler(staticPath: string): RequestListener {
       return
     }
     if (req.method !== "GET" && req.method !== "HEAD") {
-      res.writeHead(405, { Allow: "GET, HEAD, OPTIONS" })
-      res.end()
+      res.writeHead(405, {
+        Allow: "GET, HEAD, OPTIONS",
+        "Content-Type": "text/plain; charset=utf-8",
+      })
+      res.end("Method not allowed.")
       return
     }
     const url = req.url ?? "/"
     if (!url.startsWith("/") || url.startsWith("//")) {
-      res.writeHead(400)
-      res.end()
+      res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" })
+      res.end("Bad request.")
       return
     }
     const [urlPath, query = ""] = url.split("?")
     const filePath = sanitize(staticPath, urlPath ?? "/")
     if (filePath === null) {
-      res.writeHead(403)
-      res.end()
+      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" })
+      res.end("Forbidden.")
       return
     }
     let target = filePath
@@ -145,13 +152,22 @@ export function createStaticHandler(staticPath: string): RequestListener {
       serve404(staticPath, req, res)
       return
     }
+    try {
+      fs.statSync(target)
+    } catch {
+      serve404(staticPath, req, res)
+      return
+    }
     let range: { start: number; end: number } | null = null
     const rangeHeader = req.headers.range
     if (rangeHeader !== undefined) {
       range = parseRange(rangeHeader, fs.statSync(target).size)
       if (range === null) {
-        res.writeHead(416, { "Content-Range": `bytes */${fs.statSync(target).size}` })
-        res.end()
+        res.writeHead(416, {
+          "Content-Range": `bytes */${fs.statSync(target).size}`,
+          "Content-Type": "text/plain; charset=utf-8",
+        })
+        res.end("Range not satisfiable.")
         return
       }
     }

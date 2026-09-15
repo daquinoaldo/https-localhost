@@ -37,15 +37,17 @@ function checkUpdates(): void {
           body += chunk.toString("utf8")
         })
         res.on("end", () => {
-          const currentVersion: unknown = JSON.parse(
-            fs.readFileSync(path.resolve(__dirname, "../package.json"), "utf8"),
-          )
-          const latestVersion: unknown = JSON.parse(body)
-          if (!isRelease(latestVersion)) return
-          const current = isVersioned(currentVersion) ? (currentVersion.version ?? "") : ""
-          if (current !== latestVersion.tag_name.replace("v", "")) {
-            console.warn("[https-localhost] New update available.")
-          }
+          try {
+            const currentVersion: unknown = JSON.parse(
+              fs.readFileSync(path.resolve(__dirname, "../package.json"), "utf8"),
+            )
+            const latestVersion: unknown = JSON.parse(body)
+            if (!isRelease(latestVersion)) return
+            const current = isVersioned(currentVersion) ? (currentVersion.version ?? "") : ""
+            if (current !== latestVersion.tag_name.replace("v", "")) {
+              console.warn("[https-localhost] New update available.")
+            }
+          } catch {}
         })
       })
       .end()
