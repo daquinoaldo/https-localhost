@@ -114,21 +114,24 @@ export function createStaticHandler(staticPath: string): RequestListener {
       return
     }
     if (req.method !== "GET" && req.method !== "HEAD") {
-      res.writeHead(405, { Allow: "GET, HEAD, OPTIONS" })
-      res.end()
+      res.writeHead(405, {
+        Allow: "GET, HEAD, OPTIONS",
+        "Content-Type": "text/plain; charset=utf-8",
+      })
+      res.end("Method not allowed.")
       return
     }
     const url = req.url ?? "/"
     if (!url.startsWith("/") || url.startsWith("//")) {
-      res.writeHead(400)
-      res.end()
+      res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" })
+      res.end("Bad request.")
       return
     }
     const [urlPath, query = ""] = url.split("?")
     const filePath = sanitize(staticPath, urlPath ?? "/")
     if (filePath === null) {
-      res.writeHead(403)
-      res.end()
+      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" })
+      res.end("Forbidden.")
       return
     }
     let target = filePath
@@ -160,8 +163,11 @@ export function createStaticHandler(staticPath: string): RequestListener {
     if (rangeHeader !== undefined) {
       range = parseRange(rangeHeader, fs.statSync(target).size)
       if (range === null) {
-        res.writeHead(416, { "Content-Range": `bytes */${fs.statSync(target).size}` })
-        res.end()
+        res.writeHead(416, {
+          "Content-Range": `bytes */${fs.statSync(target).size}`,
+          "Content-Type": "text/plain; charset=utf-8",
+        })
+        res.end("Range not satisfiable.")
         return
       }
     }
