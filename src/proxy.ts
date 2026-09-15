@@ -36,6 +36,11 @@ export function createProxyHandler(target: string): RequestListener {
   const port = url.port === "" ? (url.protocol === "https:" ? 443 : 80) : Number(url.port)
 
   return function handleProxy(req: IncomingMessage, res: ServerResponse): void {
+    if (req.method === "OPTIONS") {
+      res.writeHead(204)
+      res.end()
+      return
+    }
     const headers = filterHeaders(req.headers)
     headers.host = url.host
     if (req.socket.remoteAddress !== undefined)
@@ -55,6 +60,9 @@ export function createProxyHandler(target: string): RequestListener {
       },
       upstreamRes => {
         res.writeHead(upstreamRes.statusCode ?? 502, filterHeaders(upstreamRes.headers))
+        upstreamRes.on("error", () => {
+          res.destroy()
+        })
         upstreamRes.pipe(res)
       },
     )
