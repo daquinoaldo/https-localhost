@@ -3,7 +3,7 @@ import type { Server } from "node:http"
 import https from "node:https"
 
 import { getCerts } from "./certs.ts"
-import { createProxyHandler } from "./proxy.ts"
+import { createProxyHandler, createProxyUpgradeHandler } from "./proxy.ts"
 import { createRouter } from "./router.ts"
 import { createStaticHandler } from "./static.ts"
 
@@ -31,6 +31,9 @@ export function createServer({
     async listen(port = 443) {
       const certs = await getCerts({ domain, certPath, reinstall })
       app.server = https.createServer(certs, router.handleRequest)
+      if (router.proxyUpgradeHandler !== undefined) {
+        app.server.on("upgrade", router.proxyUpgradeHandler)
+      }
       await new Promise<void>(resolve => {
         app.server?.listen(port, resolve)
       })
@@ -39,6 +42,7 @@ export function createServer({
     },
     async proxy(target, port = 443) {
       router.setProxyHandler(createProxyHandler(target))
+      router.setProxyUpgradeHandler(createProxyUpgradeHandler(target))
       console.info(`Proxying to ${target}`)
       await app.listen(port)
       return app
