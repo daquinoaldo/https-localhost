@@ -43,8 +43,13 @@ export function createProxyHandler(target: string): RequestListener {
     }
     const headers = filterHeaders(req.headers)
     headers.host = url.host
-    if (req.socket.remoteAddress !== undefined)
-      headers["x-forwarded-for"] = req.socket.remoteAddress
+    if (req.socket.remoteAddress !== undefined) {
+      const forwardedFor = req.headers["x-forwarded-for"]
+      headers["x-forwarded-for"] =
+        forwardedFor === undefined
+          ? req.socket.remoteAddress
+          : `${forwardedFor}, ${req.socket.remoteAddress}`
+    }
     headers["x-forwarded-proto"] =
       (req.socket as { encrypted?: boolean }).encrypted === true ? "https" : "http"
     if (req.headers.host !== undefined) headers["x-forwarded-host"] = req.headers.host
