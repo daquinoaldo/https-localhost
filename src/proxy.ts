@@ -36,6 +36,16 @@ function connectionListedHeaders(
   return listed
 }
 
+// A valid HTTP header name (RFC 9110 §5.1 token). Assigning an arbitrary
+// string as a property name (e.g. "__proto__") on a plain object would be a
+// prototype-pollution / property-injection hazard, so every header name is
+// validated before it is written to the outgoing headers object.
+const HEADER_NAME = /^[a-z0-9!#$%&'*+.^_`|~-]+$/u
+
+function isSafeHeaderName(name: string): boolean {
+  return HEADER_NAME.test(name) && !Object.prototype.hasOwnProperty.call(Object.prototype, name)
+}
+
 function filterHeaders(
   headers: IncomingMessage["headers"],
   { keepUpgradeHeaders = false }: { keepUpgradeHeaders?: boolean } = {},
@@ -47,15 +57,20 @@ function filterHeaders(
   for (const [name, value] of Object.entries(headers)) {
     if (value === undefined) continue
     const lowerName = name.toLowerCase()
+    if (!isSafeHeaderName(lowerName)) continue
     if (HOP_BY_HOP_HEADERS.has(lowerName) || connectionListed.has(lowerName)) {
       // On the upgrade path Connection and Upgrade must be preserved (see
       // createProxyUpgradeHandler); everything else stays hop-by-hop.
-      if (keepUpgradeHeaders && (lowerName === "connection" || lowerName === "upgrade")) {
-        filtered[name] = value
+      if (
+        keepUpgradeHeaders &&
+        (lowerName === "connection" || lowerName === "upgrade") &&
+        typeof value === "string"
+      ) {
+        filtered[lowerName] = value
       }
       continue
     }
-    filtered[name] = value
+    filtered[lowerName] = value
   }
   return filtered
 }

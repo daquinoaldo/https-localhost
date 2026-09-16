@@ -120,16 +120,26 @@ async function runMkcert({
 
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
-    execFile(exePath, args, (error, stdout, stderr) => {
-      if (stdout.length > 0) console.log(stdout)
-      if (stderr.length > 0) console.error(stderr)
-      if (error !== null) {
-        console.error(error)
-        reject(new Error(`mkcert failed: ${error.message}`))
-        return
-      }
-      resolve()
-    })
+    // On Linux the freshly written executable may still be held by the
+    // downloader's fd for a moment (ETXTBSY); retry a few times before
+    // giving up.
+    const attempt = (retriesLeft: number): void => {
+      execFile(exePath, args, (error, stdout, stderr) => {
+        if (stdout.length > 0) console.log(stdout)
+        if (stderr.length > 0) console.error(stderr)
+        if (error !== null) {
+          if ((error as NodeJS.ErrnoException).code === "ETXTBSY" && retriesLeft > 0) {
+            setTimeout(() => attempt(retriesLeft - 1), 250)
+            return
+          }
+          console.error(error)
+          reject(new Error(`mkcert failed: ${error.message}`))
+          return
+        }
+        resolve()
+      })
+    }
+    attempt(5)
   })
 }
 

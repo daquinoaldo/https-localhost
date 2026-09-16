@@ -81,47 +81,56 @@ function serveFile(
   res: ServerResponse,
   range: { start: number; end: number } | null,
 ): void {
-  const stat = fs.statSync(target)
-  const etag = `"${stat.size.toString(16)}-${stat.mtimeMs.toString(16)}"`
-  res.setHeader("ETag", etag)
-  res.setHeader("Last-Modified", stat.mtime.toUTCString())
-  res.setHeader("Accept-Ranges", "bytes")
+  // Open first, then fstat the descriptor: stat and read refer to the same
+  // open file, so the metadata cannot drift from the content between the
+  // check and the read (TOCTOU).
+  const fd = fs.openSync(target, "r")
+  try {
+    const stat = fs.fstatSync(fd)
+    const etag = `"${stat.size.toString(16)}-${stat.mtimeMs.toString(16)}"`
+    res.setHeader("ETag", etag)
+    res.setHeader("Last-Modified", stat.mtime.toUTCString())
+    res.setHeader("Accept-Ranges", "bytes")
 
-  const ifNoneMatch = req.headers["if-none-match"]
-  if (
-    ifNoneMatch?.split(",").some(tag => tag.trim() === etag || tag.trim() === `W/${etag}`) === true
-  ) {
-    res.writeHead(304)
-    res.end()
-    return
-  }
-  const ifModifiedSince = req.headers["if-modified-since"]
-  if (ifModifiedSince !== undefined && !Number.isNaN(new Date(ifModifiedSince).getTime())) {
-    if (stat.mtime <= new Date(ifModifiedSince)) {
+    const ifNoneMatch = req.headers["if-none-match"]
+    if (
+      ifNoneMatch?.split(",").some(tag => tag.trim() === etag || tag.trim() === `W/${etag}`) ===
+      true
+    ) {
       res.writeHead(304)
       res.end()
       return
     }
-  }
+    const ifModifiedSince = req.headers["if-modified-since"]
+    if (ifModifiedSince !== undefined && !Number.isNaN(new Date(ifModifiedSince).getTime())) {
+      if (stat.mtime <= new Date(ifModifiedSince)) {
+        res.writeHead(304)
+        res.end()
+        return
+      }
+    }
 
-  const { size } = stat
-  const content = fs.readFileSync(target)
-  const body = range === null ? content : content.subarray(range.start, range.end + 1)
-  res.writeHead(
-    range === null ? 200 : 206,
-    Object.assign(
-      {
-        "Content-Type": mime(target),
-        "Content-Length": range === null ? size : range.end - range.start + 1,
-      },
-      range === null ? {} : { "Content-Range": `bytes ${range.start}-${range.end}/${size}` },
-    ),
-  )
-  if (req.method === "HEAD") {
-    res.end()
-    return
+    const { size } = stat
+    const content = fs.readFileSync(fd)
+    const body = range === null ? content : content.subarray(range.start, range.end + 1)
+    res.writeHead(
+      range === null ? 200 : 206,
+      Object.assign(
+        {
+          "Content-Type": mime(target),
+          "Content-Length": range === null ? size : range.end - range.start + 1,
+        },
+        range === null ? {} : { "Content-Range": `bytes ${range.start}-${range.end}/${size}` },
+      ),
+    )
+    if (req.method === "HEAD") {
+      res.end()
+      return
+    }
+    res.end(body)
+  } finally {
+    fs.closeSync(fd)
   }
-  res.end(body)
 }
 
 export function createStaticHandler(staticPath: string): RequestListener {
@@ -157,10 +166,19 @@ export function createStaticHandler(staticPath: string): RequestListener {
       const stat = fs.statSync(target)
       if (stat.isDirectory()) {
         if (urlPath?.endsWith("/") !== true) {
-          const relativeUrlPath = urlPath?.replace(/^\//u, "") ?? ""
-          res.writeHead(301, {
-            Location: encodeURI(`/${relativeUrlPath}/${query === "" ? "" : `?${query}`}`),
-          })
+          // Re-encode the user-controlled path and only redirect when the
+          // result matches a strict same-site location shape: printable ASCII
+          // (percent-encoded) characters only, single root, never
+          // protocol-relative.
+          const location = encodeURI(
+            `/${(urlPath ?? "/").replace(/^\//u, "")}/${query === "" ? "" : `?${query}`}`,
+          )
+          if (!/^\/(?!\/)[\x20-\x7e]*$/u.test(location)) {
+            res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" })
+            res.end("Bad request.")
+            return
+          }
+          res.writeHead(301, { Location: location })
           res.end()
           return
         }

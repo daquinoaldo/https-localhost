@@ -147,7 +147,10 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
     app = createServer()
     await app.serve("test/fixtures", HTTPS_PORT)
 
-    const outsideFile = path.resolve(os.tmpdir(), "https-localhost-outside-secret.txt")
+    // A random directory outside the served root; not a predictable file in
+    // the shared temp dir.
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "https-localhost-outside-"))
+    const outsideFile = path.join(outsideDir, "secret.txt")
     fs.writeFileSync(outsideFile, "TOPSECRET")
     fs.symlinkSync(outsideFile, "test/fixtures/symlink-secret.txt")
     try {
@@ -155,7 +158,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
       assert.strictEqual(res.statusCode, 403)
     } finally {
       fs.rmSync("test/fixtures/symlink-secret.txt")
-      fs.rmSync(outsideFile, { force: true })
+      fs.rmSync(outsideDir, { recursive: true, force: true })
     }
   })
 
