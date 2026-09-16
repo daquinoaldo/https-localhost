@@ -63,9 +63,9 @@ async function download(url: string, destination: string): Promise<void> {
   const tempDestination = `${destination}.download-${process.pid}`
   return new Promise((resolve, reject) => {
     function get(currentUrl: string, redirectsLeft: number): void {
-      const file = fs.createWriteStream(tempDestination)
+      let file: fs.WriteStream | undefined
       function fail(error: Error): void {
-        file.destroy()
+        file?.destroy()
         fs.rmSync(tempDestination, { force: true })
         reject(error)
       }
@@ -93,16 +93,18 @@ async function download(url: string, destination: string): Promise<void> {
             fail(new Error(`Failed to download ${currentUrl} (HTTP ${statusCode ?? "unknown"})`))
             return
           }
-          response.pipe(file)
-          file.on("finish", () => {
-            file.close(err => {
+          const output = fs.createWriteStream(tempDestination)
+          file = output
+          response.pipe(output)
+          output.on("finish", () => {
+            output.close(err => {
               if (err === undefined || err === null) {
                 fs.renameSync(tempDestination, destination)
                 resolve()
               } else fail(new Error("Failed to close the certificate file", { cause: err }))
             })
           })
-          file.on("error", fail)
+          output.on("error", fail)
         })
         .on("error", fail)
     }
