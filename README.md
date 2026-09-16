@@ -28,10 +28,6 @@ Usage notes:
   - `--proxy <url>`: proxy all requests to the given http(s) URL (`PROXY_TARGET`)
 - Specifying a port number prevents HTTP to HTTPS redirect.
 
-### Standalone binaries
-
-If you don't have Node.js installed just use a packaged version! Download it from the [release page](https://github.com/daquinoaldo/https-localhost/releases).
-
 ## Use as module
 
 Install as a dependency:

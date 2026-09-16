@@ -14,49 +14,6 @@ export type CertificatePair = {
   cert: Buffer
 }
 
-function isRelease(v: unknown): v is { tag_name: string } {
-  return typeof v === "object" && v !== null && "tag_name" in v
-}
-
-function isVersioned(v: unknown): v is { version?: string } {
-  return typeof v === "object" && v !== null
-}
-
-function checkUpdates(): void {
-  try {
-    const options = {
-      host: "api.github.com",
-      path: "/repos/daquinoaldo/https-localhost/releases/latest",
-      method: "GET",
-      headers: { "User-Agent": "node.js" },
-    }
-    https
-      .request(options, res => {
-        let body = ""
-        res.on("data", (chunk: Buffer) => {
-          body += chunk.toString("utf8")
-        })
-        res.on("end", () => {
-          try {
-            const currentVersion: unknown = JSON.parse(
-              fs.readFileSync(path.resolve(__dirname, "../package.json"), "utf8"),
-            )
-            const latestVersion: unknown = JSON.parse(body)
-            if (!isRelease(latestVersion)) return
-            const current = isVersioned(currentVersion) ? (currentVersion.version ?? "") : ""
-            if (current !== latestVersion.tag_name.replace("v", "")) {
-              console.warn("[https-localhost] New update available.")
-            }
-          } catch {}
-        })
-      })
-      .end()
-  } catch {
-    // Just catch everything, this is not a critic part and can fail.
-    // It is important to not affect the script behavior.
-  }
-}
-
 function getExe(): string {
   switch (process.platform) {
     case "darwin":
@@ -164,7 +121,6 @@ export async function getCerts({
   certPath?: string
   reinstall?: boolean
 } = {}): Promise<CertificatePair> {
-  if ((process as NodeJS.Process & { pkg?: boolean }).pkg === true) checkUpdates()
   if (reinstall || !fs.existsSync(path.join(certPath, getExe())))
     await generate({ appDataPath: certPath, domain })
   try {

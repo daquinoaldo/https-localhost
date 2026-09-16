@@ -92,13 +92,5 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@12.3.4",
-  "pkg": {
-    "scripts": "*.js",
-    "targets": [
-      "node16-macos-x64",
-      "node16-linux-x64",
-      "node16-win-x64"
-    ]
-  }
+  "packageManager": "pnpm@12.3.4"
 }

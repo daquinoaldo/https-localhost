@@ -40,21 +40,4 @@ jobs:
           pnpm version ${{ inputs.upgrade }} --message "chore: release %s"
           git push --follow-tags
 
-      - run: pnpm publish
-
-      - name: Build and create release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |-
-          name=$(node -p "require('./package.json').name")
-          version=$(node -p "require('./package.json').version")
-          pnpm add --global pkg
-          pnpm build
-          pkg --out-path build dist/cjs/cli.js
-
-          gh release create "v$version" \
-            --title "Release v$version" \
-            --notes "Release v$version" \
-            "./build/$name-linux" \
-            "./build/$name-macos" \
-            "./build/$name-win.exe"
+      - run: pnpm publish --provenance
