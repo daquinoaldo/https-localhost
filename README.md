@@ -31,7 +31,7 @@ Usage notes:
 
 ## Use as module
 
-Install as a dependency (`-D` when you only use it as a dev server, plain `npm i https-localhost` when your app depends on it at runtime):
+Install as a dev dependency:
 
 ```sh
 npm i -D https-localhost
@@ -51,9 +51,6 @@ await app.serve(path) // serve static files
 // or, instead of serve, proxy an existing server:
 await app.proxy("http://localhost:3000")
 ```
-
-> [!WARNING]
-> Every response is sent with `Access-Control-Allow-Origin: *`. This is what makes cross-origin calls from your local apps work, but it also means any website you visit can read the responses of the proxied target while the proxy is running. Stop it when you are done and do not point it at anything sensitive.
 
 Alternatively, you can use the certificates in your own server:
 
