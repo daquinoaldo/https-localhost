@@ -42,24 +42,7 @@ if (proxy !== undefined && parsedArgs.positionals.length > 0) {
   process.exit(1)
 }
 
-const env = getEnv({
-  PORT: port,
-  HOST: host,
-  CERT_PATH: certPath,
-  REINSTALL: reinstall,
-  PROXY_TARGET: proxy,
-})
-
-const app = createServer({
-  domain: env.HOST,
-  certPath: env.CERT_PATH,
-  reinstall: env.REINSTALL,
-})
-if (env.PROXY_TARGET !== undefined) app.proxy(env.PROXY_TARGET, env.PORT)
-else app.serve(staticFolder, env.PORT)
-if (env.PORT === 443) app.redirect()
-
-process.on("uncaughtException", err => {
+function friendlyError(err: unknown): void {
   const error = err as NodeJS.ErrnoException
   switch (error.code) {
     case "EACCES":
@@ -82,4 +65,40 @@ process.on("uncaughtException", err => {
       break
   }
   process.exit(1)
+}
+
+let env: ReturnType<typeof getEnv>
+try {
+  env = getEnv({
+    PORT: port,
+    HOST: host,
+    CERT_PATH: certPath,
+    REINSTALL: reinstall,
+    PROXY_TARGET: proxy,
+  })
+} catch (err) {
+  const issues =
+    err !== null && typeof err === "object" && "issues" in err && Array.isArray(err.issues)
+      ? (err.issues as { path: (string | number | symbol)[]; message: string }[])
+      : undefined
+  const summary =
+    issues === undefined
+      ? err instanceof Error
+        ? err.message
+        : String(err)
+      : issues.map(issue => `${issue.path.join(".")}: ${issue.message}`).join("\n")
+  console.error(`Invalid arguments or environment:\n${summary}`)
+  process.exit(1)
+}
+
+process.on("unhandledRejection", friendlyError)
+process.on("uncaughtException", friendlyError)
+
+const app = createServer({
+  domain: env.HOST,
+  certPath: env.CERT_PATH,
+  reinstall: env.REINSTALL,
 })
+if (env.PROXY_TARGET !== undefined) app.proxy(env.PROXY_TARGET, env.PORT)
+else app.serve(staticFolder, env.PORT)
+if (env.PORT === 443) app.redirect()

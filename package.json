@@ -38,7 +38,8 @@
       "types": "./src/certs.ts",
       "import": "./src/certs.ts",
       "default": "./src/certs.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "main": "dist/cjs/index.js",
@@ -56,11 +57,14 @@
         "import": "./dist/esm/certs.js",
         "require": "./dist/cjs/certs.js",
         "default": "./dist/esm/certs.js"
-      }
+      },
+      "./package.json": "./package.json"
     }
   },
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.esm.json && tsc --project tsconfig.build.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build": "pnpm run build:esm && pnpm run build:cjs",
+    "build:esm": "tsc --project tsconfig.build.esm.json && node -e \"fs.writeFileSync('dist/esm/package.json', JSON.stringify({ type: 'module' }))\"",
+    "build:cjs": "tsc --project tsconfig.build.cjs.json && node -e \"fs.writeFileSync('dist/cjs/package.json', JSON.stringify({ type: 'commonjs' }))\"",
     "fix": "oxfmt && oxlint --fix && knip && tsc --noEmit",
     "lint": "oxfmt --check && oxlint && knip && tsc --noEmit",
     "test": "node --test-concurrency=1 --test test/*.test.ts",
@@ -93,5 +97,13 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@12.3.4"
+  "packageManager": "pnpm@12.3.4",
+  "pkg": {
+    "scripts": "*.js",
+    "targets": [
+      "node16-macos-x64",
+      "node16-linux-x64",
+      "node16-win-x64"
+    ]
+  }
 }

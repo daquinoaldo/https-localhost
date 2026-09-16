@@ -8,6 +8,7 @@
     "erasableSyntaxOnly": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
+    "tsBuildInfoFile": ".cache/tsc/tsconfig.tsbuildinfo",
     "isolatedModules": true,
     "lib": ["ES2023"],
     "module": "NodeNext",

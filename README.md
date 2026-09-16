@@ -26,11 +26,12 @@ Usage notes:
   - `--cert-path <path>`: custom certificate directory (`CERT_PATH`)
   - `--reinstall`: force certificate re-generation (`REINSTALL=true`)
   - `--proxy <url>`: proxy all requests to the given http(s) URL (`PROXY_TARGET`)
+  - `-h, --help`: display help
 - Specifying a port number prevents HTTP to HTTPS redirect.
 
 ## Use as module
 
-Install as a dependency:
+Install as a dev dependency:
 
 ```sh
 npm i -D https-localhost

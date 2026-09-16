@@ -17,46 +17,98 @@ export type CertificatePair = {
 function getExe(): string {
   switch (process.platform) {
     case "darwin":
+      if (process.arch === "arm64") return `mkcert-${MKCERT_VERSION}-darwin-arm64`
       return `mkcert-${MKCERT_VERSION}-darwin-amd64`
     case "linux":
-      if (process.arch === "arm" || process.arch === "arm64") {
-        return `mkcert-${MKCERT_VERSION}-linux-arm`
-      }
+      if (process.arch === "arm64") return `mkcert-${MKCERT_VERSION}-linux-arm64`
+      if (process.arch === "arm") return `mkcert-${MKCERT_VERSION}-linux-arm`
       return `mkcert-${MKCERT_VERSION}-linux-amd64`
     case "win32":
       return `mkcert-${MKCERT_VERSION}-windows-amd64.exe`
     default:
-      console.error(
-        "Cannot generate the localhost certificate on your " +
-          "platform. Please, consider contacting the developer if you can help.",
+      throw new Error(
+        "Cannot generate the localhost certificate on your platform " +
+          `(${process.platform}-${process.arch}). Please, consider contacting the developer if you can help.`,
       )
-      process.exit(0)
+  }
+}
+
+const MAX_REDIRECTS = 5
+
+// mkcert release binaries are a few MB; a truncated or empty cache (e.g. an
+// interrupted download or an error page written by older versions) must be
+// re-downloaded instead of failing exec with a cryptic error forever.
+const MIN_EXECUTABLE_SIZE = 1024 * 1024
+
+function isValidCachedExecutable(exePath: string): boolean {
+  try {
+    const stat = fs.statSync(exePath)
+    return (
+      stat.isFile() &&
+      stat.size >= MIN_EXECUTABLE_SIZE &&
+      fs.accessSync(exePath, fs.constants.X_OK) === undefined
+    )
+  } catch {
+    return false
   }
 }
 
 async function download(url: string, destination: string): Promise<void> {
   console.log("Downloading the mkcert executable...")
-  const file = fs.createWriteStream(destination)
+  // Download to a temporary file and rename it into place: spawning a
+  // binary whose file descriptor is still open anywhere fails with ETXTBSY
+  // on Linux, and a rename gives the executable a fresh inode no writer
+  // holds. The temp file lives in the same directory so the rename is
+  // atomic.
+  const tempDestination = `${destination}.download-${process.pid}`
   return new Promise((resolve, reject) => {
-    function get(currentUrl: string): void {
+    function get(currentUrl: string, redirectsLeft: number): void {
+      let file: fs.WriteStream | undefined
+      function fail(error: Error): void {
+        file?.destroy()
+        fs.rmSync(tempDestination, { force: true })
+        reject(error)
+      }
       https
         .get(currentUrl, response => {
-          if (response.statusCode === 302 && response.headers.location !== undefined) {
-            get(response.headers.location)
+          const { statusCode } = response
+          const location = response.headers.location
+          if (
+            statusCode !== undefined &&
+            statusCode >= 300 &&
+            statusCode < 400 &&
+            location !== undefined
+          ) {
+            response.resume()
+            if (redirectsLeft <= 0) {
+              fail(new Error(`Too many redirects while downloading ${url}`))
+              return
+            }
+            get(new URL(location, currentUrl).toString(), redirectsLeft - 1)
             return
           }
-          response.pipe(file)
-          file.on("finish", () => {
-            file.close(err => {
-              if (err === undefined || err === null) resolve()
-              else reject(new Error("Failed to close the certificate file", { cause: err }))
+          if (statusCode !== 200) {
+            // Never write an error page into the executable file.
+            response.resume()
+            fail(new Error(`Failed to download ${currentUrl} (HTTP ${statusCode ?? "unknown"})`))
+            return
+          }
+          const output = fs.createWriteStream(tempDestination)
+          file = output
+          response.pipe(output)
+          output.on("finish", () => {
+            output.close(err => {
+              if (err === undefined || err === null) {
+                fs.renameSync(tempDestination, destination)
+                resolve()
+              } else fail(new Error("Failed to close the certificate file", { cause: err }))
             })
           })
-          file.on("error", reject)
+          output.on("error", fail)
         })
-        .on("error", reject)
+        .on("error", fail)
     }
-    get(url)
+    get(url, MAX_REDIRECTS)
   })
 }
 
@@ -78,16 +130,40 @@ async function runMkcert({
 
   return new Promise((resolve, reject) => {
     console.log("Running mkcert to generate certificates...")
-    execFile(exePath, args, (error, stdout, stderr) => {
-      if (stdout.length > 0) console.log(stdout)
-      if (stderr.length > 0) console.error(stderr)
-      if (error !== null) {
-        console.error(error)
-        reject(new Error(`mkcert failed: ${error.message}`))
-        return
+    // On Linux the freshly written executable may still be held by the
+    // downloader's fd for a moment (ETXTBSY); retry a few times before
+    // giving up. The error can surface either synchronously from execFile
+    // or through the callback.
+    const retry = (retriesLeft: number): void => {
+      setTimeout(() => attempt(retriesLeft), 250)
+    }
+    const attempt = (retriesLeft: number): void => {
+      let child: ReturnType<typeof execFile>
+      try {
+        child = execFile(exePath, args, (error, stdout, stderr) => {
+          if (stdout.length > 0) console.log(stdout)
+          if (stderr.length > 0) console.error(stderr)
+          if (error !== null) {
+            if ((error as NodeJS.ErrnoException).code === "ETXTBSY" && retriesLeft > 0) {
+              retry(retriesLeft - 1)
+              return
+            }
+            console.error(error)
+            reject(new Error(`mkcert failed: ${error.message}`))
+            return
+          }
+          resolve()
+        })
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ETXTBSY" && retriesLeft > 0) {
+          retry(retriesLeft - 1)
+          return
+        }
+        throw error
       }
-      resolve()
-    })
+      child.on("error", () => {})
+    }
+    attempt(5)
   })
 }
 
@@ -104,7 +180,9 @@ export async function generate({
   const url = `https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/`
   const exe = getExe()
   const exePath = path.join(appDataPath, exe)
-  if (!fs.existsSync(exePath)) {
+  const cached = isValidCachedExecutable(exePath)
+  if (!cached) {
+    if (fs.existsSync(exePath)) fs.rmSync(exePath, { force: true })
     await download(url + exe, exePath)
     fs.chmodSync(exePath, "0755")
   }

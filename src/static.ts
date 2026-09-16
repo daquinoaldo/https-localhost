@@ -28,8 +28,11 @@ function sanitize(staticPath: string, urlPath: string): string | null {
 }
 
 function parseRange(header: string, size: number): { start: number; end: number } | null {
-  const firstRange = header.trim().split(",", 1)[0]
-  const match = /^bytes=(\d*)-(\d*)$/u.exec(firstRange ?? "")
+  const trimmed = header.trim()
+  // Multi-range requests are answered with the full representation (RFC 9110
+  // §14.2 allows a server to ignore Range).
+  if (trimmed.includes(",")) return null
+  const match = /^bytes=(\d*)-(\d*)$/u.exec(trimmed)
   if (match === null || (match[1] === "" && match[2] === "")) return null
   if (match[1] === "") {
     const n = Number(match[2])
@@ -57,53 +60,77 @@ function serve404(staticPath: string, req: IncomingMessage, res: ServerResponse)
   }
 }
 
+// The lexical sanitize() check does not catch symlinks pointing outside the
+// static root. After resolving the real path, verify it still lives beneath
+// the (real) root; otherwise attackers able to plant a symlink in the served
+// tree can read arbitrary readable files (e.g. via an uploaded site folder).
+function confine(root: string, target: string): string | null {
+  try {
+    const realRoot = fs.realpathSync(root)
+    const realTarget = fs.realpathSync(target)
+    if (realTarget !== realRoot && !realTarget.startsWith(`${realRoot}${path.sep}`)) return null
+    return realTarget
+  } catch {
+    return null
+  }
+}
+
 function serveFile(
   target: string,
   req: IncomingMessage,
   res: ServerResponse,
   range: { start: number; end: number } | null,
 ): void {
-  const stat = fs.statSync(target)
-  const etag = `"${stat.size.toString(16)}-${stat.mtimeMs.toString(16)}"`
-  res.setHeader("ETag", etag)
-  res.setHeader("Last-Modified", stat.mtime.toUTCString())
-  res.setHeader("Accept-Ranges", "bytes")
+  // Open first, then fstat the descriptor: stat and read refer to the same
+  // open file, so the metadata cannot drift from the content between the
+  // check and the read (TOCTOU).
+  const fd = fs.openSync(target, "r")
+  try {
+    const stat = fs.fstatSync(fd)
+    const etag = `"${stat.size.toString(16)}-${stat.mtimeMs.toString(16)}"`
+    res.setHeader("ETag", etag)
+    res.setHeader("Last-Modified", stat.mtime.toUTCString())
+    res.setHeader("Accept-Ranges", "bytes")
 
-  const ifNoneMatch = req.headers["if-none-match"]
-  if (
-    ifNoneMatch?.split(",").some(tag => tag.trim() === etag || tag.trim() === `W/${etag}`) === true
-  ) {
-    res.writeHead(304)
-    res.end()
-    return
-  }
-  const ifModifiedSince = req.headers["if-modified-since"]
-  if (ifModifiedSince !== undefined && !Number.isNaN(new Date(ifModifiedSince).getTime())) {
-    if (stat.mtime <= new Date(ifModifiedSince)) {
+    const ifNoneMatch = req.headers["if-none-match"]
+    if (
+      ifNoneMatch?.split(",").some(tag => tag.trim() === etag || tag.trim() === `W/${etag}`) ===
+      true
+    ) {
       res.writeHead(304)
       res.end()
       return
     }
-  }
+    const ifModifiedSince = req.headers["if-modified-since"]
+    if (ifModifiedSince !== undefined && !Number.isNaN(new Date(ifModifiedSince).getTime())) {
+      if (stat.mtime <= new Date(ifModifiedSince)) {
+        res.writeHead(304)
+        res.end()
+        return
+      }
+    }
 
-  const { size } = stat
-  const content = fs.readFileSync(target)
-  const body = range === null ? content : content.subarray(range.start, range.end + 1)
-  res.writeHead(
-    range === null ? 200 : 206,
-    Object.assign(
-      {
-        "Content-Type": mime(target),
-        "Content-Length": range === null ? size : range.end - range.start + 1,
-      },
-      range === null ? {} : { "Content-Range": `bytes ${range.start}-${range.end}/${size}` },
-    ),
-  )
-  if (req.method === "HEAD") {
-    res.end()
-    return
+    const { size } = stat
+    const content = fs.readFileSync(fd)
+    const body = range === null ? content : content.subarray(range.start, range.end + 1)
+    res.writeHead(
+      range === null ? 200 : 206,
+      Object.assign(
+        {
+          "Content-Type": mime(target),
+          "Content-Length": range === null ? size : range.end - range.start + 1,
+        },
+        range === null ? {} : { "Content-Range": `bytes ${range.start}-${range.end}/${size}` },
+      ),
+    )
+    if (req.method === "HEAD") {
+      res.end()
+      return
+    }
+    res.end(body)
+  } finally {
+    fs.closeSync(fd)
   }
-  res.end(body)
 }
 
 export function createStaticHandler(staticPath: string): RequestListener {
@@ -139,10 +166,19 @@ export function createStaticHandler(staticPath: string): RequestListener {
       const stat = fs.statSync(target)
       if (stat.isDirectory()) {
         if (urlPath?.endsWith("/") !== true) {
-          const relativeUrlPath = urlPath?.replace(/^\//u, "") ?? ""
-          res.writeHead(301, {
-            Location: encodeURI(`./${relativeUrlPath}/${query === "" ? "" : `?${query}`}`),
-          })
+          // Re-encode the user-controlled path and only redirect when the
+          // result matches a strict same-site location shape: printable ASCII
+          // (percent-encoded) characters only, single root, never
+          // protocol-relative.
+          const location = encodeURI(
+            `/${(urlPath ?? "/").replace(/^\//u, "")}/${query === "" ? "" : `?${query}`}`,
+          )
+          if (!/^\/(?!\/)[\x20-\x7e]*$/u.test(location)) {
+            res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" })
+            res.end("Bad request.")
+            return
+          }
+          res.writeHead(301, { Location: location })
           res.end()
           return
         }
@@ -152,6 +188,13 @@ export function createStaticHandler(staticPath: string): RequestListener {
       serve404(staticPath, req, res)
       return
     }
+    const confined = confine(staticPath, target)
+    if (confined === null) {
+      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" })
+      res.end("Forbidden.")
+      return
+    }
+    target = confined
     try {
       fs.statSync(target)
     } catch {
@@ -161,8 +204,14 @@ export function createStaticHandler(staticPath: string): RequestListener {
     let range: { start: number; end: number } | null = null
     const rangeHeader = req.headers.range
     if (rangeHeader !== undefined) {
-      range = parseRange(rangeHeader, fs.statSync(target).size)
-      if (range === null) {
+      // null means ignore the header (serve 200), not an error: malformed or
+      // unsupported (e.g. multi-range) requests get the full representation.
+      const parsed = parseRange(rangeHeader, fs.statSync(target).size)
+      if (
+        parsed === null &&
+        rangeHeader.trim().startsWith("bytes=") &&
+        !rangeHeader.includes(",")
+      ) {
         res.writeHead(416, {
           "Content-Range": `bytes */${fs.statSync(target).size}`,
           "Content-Type": "text/plain; charset=utf-8",
@@ -170,6 +219,7 @@ export function createStaticHandler(staticPath: string): RequestListener {
         res.end("Range not satisfiable.")
         return
       }
+      range = parsed
     }
     serveFile(target, req, res, range)
   }

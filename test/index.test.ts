@@ -1,5 +1,7 @@
 import assert from "node:assert"
 import fs from "node:fs"
+import os from "node:os"
+import path from "node:path"
 import { afterEach, describe, it } from "node:test"
 
 import { generate, remove } from "../src/certs.ts"
@@ -110,7 +112,7 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
     const res = await makeRequest("/sub")
     assert.strictEqual(res.statusCode, 301)
-    assert.strictEqual(res.headers["location"], "./sub/")
+    assert.strictEqual(res.headers["location"], "/sub/")
 
     const index = await makeRequest("/sub/")
     assert.strictEqual(index.statusCode, 200)
@@ -126,7 +128,38 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
 
     const res = await makeRequest("/sub?a=1")
     assert.strictEqual(res.statusCode, 301)
-    assert.strictEqual(res.headers["location"], "./sub/?a=1")
+    assert.strictEqual(res.headers["location"], "/sub/?a=1")
+  })
+
+  void it("redirects nested directories to a resolvable location", async () => {
+    app = createServer()
+    await app.serve("test/fixtures", HTTPS_PORT)
+
+    const res = await makeRequest("/sub/deep")
+    assert.strictEqual(res.statusCode, 301)
+    assert.strictEqual(res.headers["location"], "/sub/deep/")
+
+    const index = await makeRequest(res.headers["location"] ?? "/")
+    assert.strictEqual(index.statusCode, 200)
+  })
+
+  void it("rejects symlinked paths escaping the served root", async () => {
+    app = createServer()
+    await app.serve("test/fixtures", HTTPS_PORT)
+
+    // A random directory outside the served root; not a predictable file in
+    // the shared temp dir.
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "https-localhost-outside-"))
+    const outsideFile = path.join(outsideDir, "secret.txt")
+    fs.writeFileSync(outsideFile, "TOPSECRET")
+    fs.symlinkSync(outsideFile, "test/fixtures/symlink-secret.txt")
+    try {
+      const res = await makeRequest("/symlink-secret.txt")
+      assert.strictEqual(res.statusCode, 403)
+    } finally {
+      fs.rmSync("test/fixtures/symlink-secret.txt")
+      fs.rmSync(outsideDir, { recursive: true, force: true })
+    }
   })
 
   void it("rejects protocol-relative and absolute request targets", async () => {
@@ -188,6 +221,15 @@ void describe("index (createServer)", { timeout: 300000 }, () => {
     const res = await makeRequest("/", false, HTTP_PORT)
     assert.strictEqual(res.statusCode, 301)
     assert.strictEqual(res.headers["location"], `https://localhost:${HTTPS_PORT}/`)
+  })
+
+  void it("redirects http to https for an IPv6 host", async () => {
+    app = createServer()
+    await app.redirect(HTTP_PORT, HTTPS_PORT)
+
+    const res = await makeRequest("/", false, HTTP_PORT, { host: "[::1]:8080" })
+    assert.strictEqual(res.statusCode, 301)
+    assert.strictEqual(res.headers["location"], `https://[::1]:${HTTPS_PORT}/`)
   })
 
   void it("doesn't install an uncaughtException handler when imported", async () => {
