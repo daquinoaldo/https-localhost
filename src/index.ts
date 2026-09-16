@@ -1,11 +1,20 @@
 import http from "node:http"
-import type { Server } from "node:http"
+import type { IncomingMessage, Server } from "node:http"
 import https from "node:https"
+import type { Duplex } from "node:stream"
 
 import { getCerts } from "./certs.ts"
 import { createProxyHandler, createProxyUpgradeHandler } from "./proxy.ts"
 import { createRouter } from "./router.ts"
 import { createStaticHandler } from "./static.ts"
+
+async function closeServer(server: Server): Promise<void> {
+  server.closeAllConnections()
+  server.closeIdleConnections()
+  await new Promise<void>(resolve => {
+    server.close(() => resolve())
+  })
+}
 
 export type HttpsLocalhostApp = {
   server?: Server
@@ -27,16 +36,36 @@ export function createServer({
 } = {}): HttpsLocalhostApp {
   const router = createRouter()
 
+  // Listening errors (e.g. EADDRINUSE) must reject the caller's promise:
+  // without an error listener Node emits them uncaught and the promise
+  // never settles.
+  function listenWithEvents(
+    server: Server,
+    port: number,
+    onUpgrade?: (req: IncomingMessage, socket: Duplex, head: Buffer) => void,
+  ): Promise<Server> {
+    server.on("error", error => {
+      server.emit("listenError", error)
+    })
+    if (onUpgrade !== undefined) server.on("upgrade", onUpgrade)
+    return new Promise<Server>((resolve, reject) => {
+      server.once("listenError", reject)
+      server.listen(port, () => {
+        server.removeListener("listenError", reject)
+        resolve(server)
+      })
+    })
+  }
+
   const app: HttpsLocalhostApp = {
     async listen(port = 443) {
-      const certs = await getCerts({ domain, certPath, reinstall })
-      app.server = https.createServer(certs, router.handleRequest)
-      if (router.proxyUpgradeHandler !== undefined) {
-        app.server.on("upgrade", router.proxyUpgradeHandler)
+      if (app.server?.listening === true) {
+        console.warn(`Server already listening, closing the previous one.`)
+        await closeServer(app.server)
       }
-      await new Promise<void>(resolve => {
-        app.server?.listen(port, resolve)
-      })
+      const certs = await getCerts({ domain, certPath, reinstall })
+      const server = https.createServer(certs, router.handleRequest)
+      app.server = await listenWithEvents(server, port, router.proxyUpgradeHandler)
       console.info(`Server running on port ${port}.`)
       return app.server
     },
@@ -48,19 +77,20 @@ export function createServer({
       return app
     },
     async redirect(httpPort = 80, httpsPort = 443) {
-      await new Promise<void>(resolve => {
-        app.http = http
-          .createServer((req, res) => {
-            const reqHost = req.headers.host ?? domain
-            res.writeHead(301, {
-              Location: `https://${reqHost.replace(`:${httpPort}`, "")}${
-                httpsPort !== 443 ? `:${httpsPort}` : ""
-              }${req.url ?? ""}`,
-            })
-            res.end()
-          })
-          .listen(httpPort, resolve)
+      if (app.http?.listening === true) {
+        console.warn(`Redirect server already listening, closing the previous one.`)
+        await closeServer(app.http)
+      }
+      const server = http.createServer((req, res) => {
+        const reqHost = req.headers.host ?? domain
+        res.writeHead(301, {
+          Location: `https://${reqHost.replace(`:${httpPort}`, "")}${
+            httpsPort !== 443 ? `:${httpsPort}` : ""
+          }${req.url ?? ""}`,
+        })
+        res.end()
       })
+      app.http = await listenWithEvents(server, httpPort)
       console.info("http to https redirection active.")
       return app
     },
