@@ -169,6 +169,13 @@ export function createProxyUpgradeHandler(
       clientSocket.write("\r\n")
       if (upstreamHead.length > 0) clientSocket.write(upstreamHead)
       if (head.length > 0) upstreamSocket.write(head)
+      // When one side of the tunnel disconnects (or errors), tear down the
+      // other side too; without this, disconnected sockets linger and can
+      // crash the process on a socket error with no listener.
+      clientSocket.on("error", () => upstreamSocket.destroy())
+      clientSocket.on("close", () => upstreamSocket.destroy())
+      upstreamSocket.on("error", () => clientSocket.destroy())
+      upstreamSocket.on("close", () => clientSocket.destroy())
       clientSocket.pipe(upstreamSocket).pipe(clientSocket)
     })
     upstream.on("error", () => clientSocket.destroy())
