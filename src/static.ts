@@ -57,6 +57,21 @@ function serve404(staticPath: string, req: IncomingMessage, res: ServerResponse)
   }
 }
 
+// The lexical sanitize() check does not catch symlinks pointing outside the
+// static root. After resolving the real path, verify it still lives beneath
+// the (real) root; otherwise attackers able to plant a symlink in the served
+// tree can read arbitrary readable files (e.g. via an uploaded site folder).
+function confine(root: string, target: string): string | null {
+  try {
+    const realRoot = fs.realpathSync(root)
+    const realTarget = fs.realpathSync(target)
+    if (realTarget !== realRoot && !realTarget.startsWith(`${realRoot}${path.sep}`)) return null
+    return realTarget
+  } catch {
+    return null
+  }
+}
+
 function serveFile(
   target: string,
   req: IncomingMessage,
@@ -152,6 +167,13 @@ export function createStaticHandler(staticPath: string): RequestListener {
       serve404(staticPath, req, res)
       return
     }
+    const confined = confine(staticPath, target)
+    if (confined === null) {
+      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" })
+      res.end("Forbidden.")
+      return
+    }
+    target = confined
     try {
       fs.statSync(target)
     } catch {
