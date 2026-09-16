@@ -6,6 +6,7 @@ node_modules
 build
 dist
 *.tsbuildinfo
+.cache
 
 # Test-generated certificate directories
 test/custom-folder/

@@ -9,6 +9,7 @@
     "moduleResolution": "Bundler",
     "noEmit": false,
     "outDir": "dist/esm",
+    "tsBuildInfoFile": ".cache/tsc/tsconfig.build.esm.tsbuildinfo",
     "verbatimModuleSyntax": true
   },
   "include": ["src/**/*.ts"]

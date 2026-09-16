@@ -9,6 +9,7 @@
     "moduleResolution": "Bundler",
     "noEmit": false,
     "outDir": "dist/cjs",
+    "tsBuildInfoFile": ".cache/tsc/tsconfig.build.cjs.tsbuildinfo",
     "verbatimModuleSyntax": false
   },
   "include": ["src/**/*.ts"]
