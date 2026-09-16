@@ -55,12 +55,18 @@ function isValidCachedExecutable(exePath: string): boolean {
 
 async function download(url: string, destination: string): Promise<void> {
   console.log("Downloading the mkcert executable...")
+  // Download to a temporary file and rename it into place: spawning a
+  // binary whose file descriptor is still open anywhere fails with ETXTBSY
+  // on Linux, and a rename gives the executable a fresh inode no writer
+  // holds. The temp file lives in the same directory so the rename is
+  // atomic.
+  const tempDestination = `${destination}.download-${process.pid}`
   return new Promise((resolve, reject) => {
     function get(currentUrl: string, redirectsLeft: number): void {
-      const file = fs.createWriteStream(destination)
+      const file = fs.createWriteStream(tempDestination)
       function fail(error: Error): void {
         file.destroy()
-        fs.rmSync(destination, { force: true })
+        fs.rmSync(tempDestination, { force: true })
         reject(error)
       }
       https
@@ -90,8 +96,10 @@ async function download(url: string, destination: string): Promise<void> {
           response.pipe(file)
           file.on("finish", () => {
             file.close(err => {
-              if (err === undefined || err === null) resolve()
-              else fail(new Error("Failed to close the certificate file", { cause: err }))
+              if (err === undefined || err === null) {
+                fs.renameSync(tempDestination, destination)
+                resolve()
+              } else fail(new Error("Failed to close the certificate file", { cause: err }))
             })
           })
           file.on("error", fail)
