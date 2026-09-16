@@ -10,8 +10,11 @@ Contributions are welcome, but I have little time to invest in this project. I a
 # install dependencies
 pnpm install
 
-# type checking and style fixes
+# type checking and lint/format check (CI runs this)
 pnpm lint
+
+# everything lint does, plus auto-format and auto-fix lint issues
+pnpm fix
 
 # run tests
 pnpm test
