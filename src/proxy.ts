@@ -122,6 +122,21 @@ export function createProxyUpgradeHandler(
       method: req.method,
       headers,
     })
+    // If the upstream answers without upgrading (e.g. 4xx/5xx), relay the
+    // status line and close both sockets: nobody else would consume the
+    // response and the client would hang forever otherwise.
+    upstream.on("response", upstreamRes => {
+      const statusLine = `HTTP/1.1 ${upstreamRes.statusCode ?? 502} ${upstreamRes.statusMessage ?? "Bad Gateway"}\r\n`
+      clientSocket.write(statusLine)
+      for (const [name, value] of Object.entries(filterHeaders(upstreamRes.headers))) {
+        if (value === undefined) continue
+        const values = Array.isArray(value) ? value : [value]
+        for (const item of values) clientSocket.write(`${name}: ${item}\r\n`)
+      }
+      clientSocket.write("\r\n")
+      clientSocket.end()
+      upstream.destroy()
+    })
     upstream.on("upgrade", (upstreamRes, upstreamSocket, upstreamHead) => {
       clientSocket.write(
         `HTTP/1.1 ${upstreamRes.statusCode ?? 101} ${upstreamRes.statusMessage ?? "Switching Protocols"}\r\n`,
