@@ -83,10 +83,14 @@ export function createServer({
       }
       const server = http.createServer((req, res) => {
         const reqHost = req.headers.host ?? domain
+        // Strip the http port from the Host without touching an unrelated
+        // occurrence (e.g. inside an IPv6 literal) and handle hosts without
+        // a port.
+        const colonIndex = reqHost.lastIndexOf(":")
+        const hasPort = colonIndex > reqHost.lastIndexOf("]")
+        const bareHost = hasPort ? reqHost.slice(0, colonIndex) : reqHost
         res.writeHead(301, {
-          Location: `https://${reqHost.replace(`:${httpPort}`, "")}${
-            httpsPort !== 443 ? `:${httpsPort}` : ""
-          }${req.url ?? ""}`,
+          Location: `https://${bareHost}${httpsPort !== 443 ? `:${httpsPort}` : ""}${req.url ?? ""}`,
         })
         res.end()
       })
