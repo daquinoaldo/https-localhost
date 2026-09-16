@@ -62,8 +62,11 @@
     }
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "lint": "oxfmt && oxlint --fix && knip && tsc --noEmit",
+    "build": "pnpm run build:esm && pnpm run build:cjs",
+    "build:esm": "tsc --project tsconfig.build.esm.json && node -e \"fs.writeFileSync('dist/esm/package.json', JSON.stringify({ type: 'module' }))\"",
+    "build:cjs": "tsc --project tsconfig.build.cjs.json && node -e \"fs.writeFileSync('dist/cjs/package.json', JSON.stringify({ type: 'commonjs' }))\"",
+    "fix": "oxfmt && oxlint --fix && knip && tsc --noEmit",
+    "lint": "oxfmt --check && oxlint && knip && tsc --noEmit",
     "test": "node --test-concurrency=1 --test test/*.test.ts",
     "prepack": "pnpm build",
     "preuninstall": "node dist/esm/certs-cli.js -u",
