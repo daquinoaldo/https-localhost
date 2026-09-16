@@ -34,29 +34,72 @@ function getExe(): string {
   }
 }
 
+const MAX_REDIRECTS = 5
+
+// mkcert release binaries are a few MB; a truncated or empty cache (e.g. an
+// interrupted download or an error page written by older versions) must be
+// re-downloaded instead of failing exec with a cryptic error forever.
+const MIN_EXECUTABLE_SIZE = 1024 * 1024
+
+function isValidCachedExecutable(exePath: string): boolean {
+  try {
+    const stat = fs.statSync(exePath)
+    return (
+      stat.isFile() &&
+      stat.size >= MIN_EXECUTABLE_SIZE &&
+      fs.accessSync(exePath, fs.constants.X_OK) === undefined
+    )
+  } catch {
+    return false
+  }
+}
+
 async function download(url: string, destination: string): Promise<void> {
   console.log("Downloading the mkcert executable...")
-  const file = fs.createWriteStream(destination)
   return new Promise((resolve, reject) => {
-    function get(currentUrl: string): void {
+    function get(currentUrl: string, redirectsLeft: number): void {
+      const file = fs.createWriteStream(destination)
+      function fail(error: Error): void {
+        file.destroy()
+        fs.rmSync(destination, { force: true })
+        reject(error)
+      }
       https
         .get(currentUrl, response => {
-          if (response.statusCode === 302 && response.headers.location !== undefined) {
-            get(response.headers.location)
+          const { statusCode } = response
+          const location = response.headers.location
+          if (
+            statusCode !== undefined &&
+            statusCode >= 300 &&
+            statusCode < 400 &&
+            location !== undefined
+          ) {
+            response.resume()
+            if (redirectsLeft <= 0) {
+              fail(new Error(`Too many redirects while downloading ${url}`))
+              return
+            }
+            get(new URL(location, currentUrl).toString(), redirectsLeft - 1)
+            return
+          }
+          if (statusCode !== 200) {
+            // Never write an error page into the executable file.
+            response.resume()
+            fail(new Error(`Failed to download ${currentUrl} (HTTP ${statusCode ?? "unknown"})`))
             return
           }
           response.pipe(file)
           file.on("finish", () => {
             file.close(err => {
               if (err === undefined || err === null) resolve()
-              else reject(new Error("Failed to close the certificate file", { cause: err }))
+              else fail(new Error("Failed to close the certificate file", { cause: err }))
             })
           })
-          file.on("error", reject)
+          file.on("error", fail)
         })
-        .on("error", reject)
+        .on("error", fail)
     }
-    get(url)
+    get(url, MAX_REDIRECTS)
   })
 }
 
@@ -104,7 +147,9 @@ export async function generate({
   const url = `https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/`
   const exe = getExe()
   const exePath = path.join(appDataPath, exe)
-  if (!fs.existsSync(exePath)) {
+  const cached = isValidCachedExecutable(exePath)
+  if (!cached) {
+    if (fs.existsSync(exePath)) fs.rmSync(exePath, { force: true })
     await download(url + exe, exePath)
     fs.chmodSync(exePath, "0755")
   }
