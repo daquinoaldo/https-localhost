@@ -156,7 +156,7 @@ export function createStaticHandler(staticPath: string): RequestListener {
         if (urlPath?.endsWith("/") !== true) {
           const relativeUrlPath = urlPath?.replace(/^\//u, "") ?? ""
           res.writeHead(301, {
-            Location: encodeURI(`./${relativeUrlPath}/${query === "" ? "" : `?${query}`}`),
+            Location: encodeURI(`/${relativeUrlPath}/${query === "" ? "" : `?${query}`}`),
           })
           res.end()
           return
