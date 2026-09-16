@@ -26,11 +26,10 @@ function getExe(): string {
     case "win32":
       return `mkcert-${MKCERT_VERSION}-windows-amd64.exe`
     default:
-      console.error(
-        "Cannot generate the localhost certificate on your " +
-          "platform. Please, consider contacting the developer if you can help.",
+      throw new Error(
+        "Cannot generate the localhost certificate on your platform " +
+          `(${process.platform}-${process.arch}). Please, consider contacting the developer if you can help.`,
       )
-      process.exit(0)
   }
 }
 
