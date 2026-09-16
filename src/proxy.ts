@@ -19,15 +19,35 @@ const HOP_BY_HOP_HEADERS: ReadonlySet<string> = new Set([
   "upgrade",
 ])
 
+// Headers listed in Connection (RFC 9110 §7.6.1) are hop-by-hop too and
+// must not be forwarded.
+function connectionListedHeaders(
+  connection: IncomingMessage["headers"]["connection"],
+): Set<string> {
+  const listed = new Set<string>()
+  const values =
+    connection === undefined ? [] : Array.isArray(connection) ? connection : [connection]
+  for (const value of values) {
+    for (const token of value.split(",")) {
+      const name = token.trim().toLowerCase()
+      if (name !== "") listed.add(name)
+    }
+  }
+  return listed
+}
+
 function filterHeaders(
   headers: IncomingMessage["headers"],
   { keepUpgradeHeaders = false }: { keepUpgradeHeaders?: boolean } = {},
 ): OutgoingHttpHeaders {
+  const connectionListed = keepUpgradeHeaders
+    ? new Set<string>()
+    : connectionListedHeaders(headers.connection)
   const filtered: OutgoingHttpHeaders = {}
   for (const [name, value] of Object.entries(headers)) {
     if (value === undefined) continue
     const lowerName = name.toLowerCase()
-    if (HOP_BY_HOP_HEADERS.has(lowerName)) {
+    if (HOP_BY_HOP_HEADERS.has(lowerName) || connectionListed.has(lowerName)) {
       // On the upgrade path Connection and Upgrade must be preserved (see
       // createProxyUpgradeHandler); everything else stays hop-by-hop.
       if (keepUpgradeHeaders && (lowerName === "connection" || lowerName === "upgrade")) {
