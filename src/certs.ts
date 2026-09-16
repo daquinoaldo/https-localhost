@@ -17,11 +17,11 @@ export type CertificatePair = {
 function getExe(): string {
   switch (process.platform) {
     case "darwin":
+      if (process.arch === "arm64") return `mkcert-${MKCERT_VERSION}-darwin-arm64`
       return `mkcert-${MKCERT_VERSION}-darwin-amd64`
     case "linux":
-      if (process.arch === "arm" || process.arch === "arm64") {
-        return `mkcert-${MKCERT_VERSION}-linux-arm`
-      }
+      if (process.arch === "arm64") return `mkcert-${MKCERT_VERSION}-linux-arm64`
+      if (process.arch === "arm") return `mkcert-${MKCERT_VERSION}-linux-arm`
       return `mkcert-${MKCERT_VERSION}-linux-amd64`
     case "win32":
       return `mkcert-${MKCERT_VERSION}-windows-amd64.exe`
