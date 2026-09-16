@@ -28,8 +28,11 @@ function sanitize(staticPath: string, urlPath: string): string | null {
 }
 
 function parseRange(header: string, size: number): { start: number; end: number } | null {
-  const firstRange = header.trim().split(",", 1)[0]
-  const match = /^bytes=(\d*)-(\d*)$/u.exec(firstRange ?? "")
+  const trimmed = header.trim()
+  // Multi-range requests are answered with the full representation (RFC 9110
+  // §14.2 allows a server to ignore Range).
+  if (trimmed.includes(",")) return null
+  const match = /^bytes=(\d*)-(\d*)$/u.exec(trimmed)
   if (match === null || (match[1] === "" && match[2] === "")) return null
   if (match[1] === "") {
     const n = Number(match[2])
@@ -183,8 +186,14 @@ export function createStaticHandler(staticPath: string): RequestListener {
     let range: { start: number; end: number } | null = null
     const rangeHeader = req.headers.range
     if (rangeHeader !== undefined) {
-      range = parseRange(rangeHeader, fs.statSync(target).size)
-      if (range === null) {
+      // null means ignore the header (serve 200), not an error: malformed or
+      // unsupported (e.g. multi-range) requests get the full representation.
+      const parsed = parseRange(rangeHeader, fs.statSync(target).size)
+      if (
+        parsed === null &&
+        rangeHeader.trim().startsWith("bytes=") &&
+        !rangeHeader.includes(",")
+      ) {
         res.writeHead(416, {
           "Content-Range": `bytes */${fs.statSync(target).size}`,
           "Content-Type": "text/plain; charset=utf-8",
@@ -192,6 +201,7 @@ export function createStaticHandler(staticPath: string): RequestListener {
         res.end("Range not satisfiable.")
         return
       }
+      range = parsed
     }
     serveFile(target, req, res, range)
   }
