@@ -26,11 +26,12 @@ Usage notes:
   - `--cert-path <path>`: custom certificate directory (`CERT_PATH`)
   - `--reinstall`: force certificate re-generation (`REINSTALL=true`)
   - `--proxy <url>`: proxy all requests to the given http(s) URL (`PROXY_TARGET`)
+  - `-h, --help`: display help
 - Specifying a port number prevents HTTP to HTTPS redirect.
 
 ## Use as module
 
-Install as a dependency:
+Install as a dependency (`-D` when you only use it as a dev server, plain `npm i https-localhost` when your app depends on it at runtime):
 
 ```sh
 npm i -D https-localhost
@@ -50,6 +51,9 @@ await app.serve(path) // serve static files
 // or, instead of serve, proxy an existing server:
 await app.proxy("http://localhost:3000")
 ```
+
+> [!WARNING]
+> Every response is sent with `Access-Control-Allow-Origin: *`. This is what makes cross-origin calls from your local apps work, but it also means any website you visit can read the responses of the proxied target while the proxy is running. Stop it when you are done and do not point it at anything sensitive.
 
 Alternatively, you can use the certificates in your own server:
 
