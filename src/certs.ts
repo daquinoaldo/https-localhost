@@ -122,22 +122,36 @@ async function runMkcert({
     console.log("Running mkcert to generate certificates...")
     // On Linux the freshly written executable may still be held by the
     // downloader's fd for a moment (ETXTBSY); retry a few times before
-    // giving up.
+    // giving up. The error can surface either synchronously from execFile
+    // or through the callback.
+    const retry = (retriesLeft: number): void => {
+      setTimeout(() => attempt(retriesLeft), 250)
+    }
     const attempt = (retriesLeft: number): void => {
-      execFile(exePath, args, (error, stdout, stderr) => {
-        if (stdout.length > 0) console.log(stdout)
-        if (stderr.length > 0) console.error(stderr)
-        if (error !== null) {
-          if ((error as NodeJS.ErrnoException).code === "ETXTBSY" && retriesLeft > 0) {
-            setTimeout(() => attempt(retriesLeft - 1), 250)
+      let child: ReturnType<typeof execFile>
+      try {
+        child = execFile(exePath, args, (error, stdout, stderr) => {
+          if (stdout.length > 0) console.log(stdout)
+          if (stderr.length > 0) console.error(stderr)
+          if (error !== null) {
+            if ((error as NodeJS.ErrnoException).code === "ETXTBSY" && retriesLeft > 0) {
+              retry(retriesLeft - 1)
+              return
+            }
+            console.error(error)
+            reject(new Error(`mkcert failed: ${error.message}`))
             return
           }
-          console.error(error)
-          reject(new Error(`mkcert failed: ${error.message}`))
+          resolve()
+        })
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ETXTBSY" && retriesLeft > 0) {
+          retry(retriesLeft - 1)
           return
         }
-        resolve()
-      })
+        throw error
+      }
+      child.on("error", () => {})
     }
     attempt(5)
   })
