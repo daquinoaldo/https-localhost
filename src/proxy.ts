@@ -19,10 +19,22 @@ const HOP_BY_HOP_HEADERS: ReadonlySet<string> = new Set([
   "upgrade",
 ])
 
-function filterHeaders(headers: IncomingMessage["headers"]): OutgoingHttpHeaders {
+function filterHeaders(
+  headers: IncomingMessage["headers"],
+  { keepUpgradeHeaders = false }: { keepUpgradeHeaders?: boolean } = {},
+): OutgoingHttpHeaders {
   const filtered: OutgoingHttpHeaders = {}
   for (const [name, value] of Object.entries(headers)) {
-    if (value === undefined || HOP_BY_HOP_HEADERS.has(name.toLowerCase())) continue
+    if (value === undefined) continue
+    const lowerName = name.toLowerCase()
+    if (HOP_BY_HOP_HEADERS.has(lowerName)) {
+      // On the upgrade path Connection and Upgrade must be preserved (see
+      // createProxyUpgradeHandler); everything else stays hop-by-hop.
+      if (keepUpgradeHeaders && (lowerName === "connection" || lowerName === "upgrade")) {
+        filtered[name] = value
+      }
+      continue
+    }
     filtered[name] = value
   }
   return filtered
@@ -97,7 +109,10 @@ export function createProxyUpgradeHandler(
   const transport = url.protocol === "https:" ? https : http
   const port = url.port === "" ? (url.protocol === "https:" ? 443 : 80) : Number(url.port)
   return function handleUpgrade(req, clientSocket, head): void {
-    const headers = filterHeaders(req.headers)
+    // An upgrade request is itself a protocol upgrade: the Connection and
+    // Upgrade headers must be forwarded verbatim or the upstream will never
+    // see the upgrade request (RFC 9110 §7.8.1 and RFC 6455 §4.2.1).
+    const headers = filterHeaders(req.headers, { keepUpgradeHeaders: true })
     headers.host = url.host
     const upstream = transport.request({
       protocol: url.protocol,
